@@ -10,7 +10,7 @@ from fastapi.staticfiles import StaticFiles
 
 STATIC_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "static")
 
-app = FastAPI(title="AVICOLE PDF Service")
+app = FastAPI(title="AVIPOUL PDF Service")
 
 # Servir les assets statiques (images du ticket)
 if os.path.isdir(STATIC_DIR):

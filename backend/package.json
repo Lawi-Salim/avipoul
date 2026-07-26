@@ -1,5 +1,5 @@
 {
-  "name": "avicole-backend",
+  "name": "avipoul-backend",
   "author": "Lawi Ibrahim",
   "version": "1.0.0",
   "private": true,
@@ -8,7 +8,11 @@
   "scripts": {
     "dev": "nodemon --exec tsx src/main.ts",
     "start": "tsx src/main.ts",
-    "typecheck": "tsc -p tsconfig.json --noEmit"
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "typecheck:scripts": "tsc -p tsconfig.scripts.json --noEmit",
+    "backup": "tsx scripts/backup.ts",
+    "restore": "tsx scripts/restore.ts",
+    "validate-backup": "tsx scripts/validate-backup.ts"
   },
   "dependencies": {
     "@nestjs/common": "^10.4.15",
@@ -34,7 +38,7 @@
     "sequelize-typescript": "2.1.6"
   },
   "devDependencies": {
-    "@types/node": "^22.18.0",
+    "@types/node": "^26.1.1",
     "@types/node-cron": "^3.0.11",
     "@types/passport-jwt": "4.0.1",
     "nodemon": "^3.1.4",

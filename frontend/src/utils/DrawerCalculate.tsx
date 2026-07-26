@@ -192,7 +192,7 @@ export function DrawerCalculate({ isOpen, onClose }: DrawerCalculateProps) {
         <DrawerCloseButton />
         <DrawerHeader borderBottom="1px solid" borderColor="border.1">
           <HStack spacing={2}>
-            <Text fontSize="md" fontWeight="bold" color="text.1">Calculatrice avicole</Text>
+            <Text fontSize="md" fontWeight="bold" color="text.1">Calculatrice avipoul</Text>
           </HStack>
         </DrawerHeader>
 

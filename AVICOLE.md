@@ -1,6 +1,6 @@
-# AVICOLE — Guide de développement
+# AVIPOUL — Guide de développement
 
-> Système de Gestion Intégré — Exploitation Avicole de Poulets de Chair
+> Système de Gestion Intégré — Exploitation Avipoul de Poulets de Chair
 > Porteur du projet : Dahlawi Ibrahim Salim (Lawi Ibrahim) · Union des Comores
 > Basé sur le Cahier des Charges v1.0 (07-07-2026)
 
@@ -35,7 +35,7 @@ Stack confirmée pour le projet :
 | Frontend | React + Vite + TypeScript | Build rapide, typage fort utile vu le nombre d'entités liées (Cycle, Stock, Ventes...) |
 | UI | Chakra UI | Composants accessibles prêts à l'emploi — idéal pour aller vite sur des écrans de saisie terrain |
 | Backend | Node.js + NestJS + TypeScript | Architecture modulaire (module/controller/service par domaine métier) — s'aligne naturellement avec le découpage par version du cahier des charges et facilite le passage au multi-utilisateur (V1.0) |
-| ORM | Sequelize (via `@nestjs/sequelize`) | Migrations + modèles, mapping direct avec le schéma `schema-avicole.sql` (section 2) |
+| ORM | Sequelize (via `@nestjs/sequelize`) | Migrations + modèles, mapping direct avec le schéma `schema-avipoul.sql` (section 2) |
 | Base de données | PostgreSQL | Fiable, gère bien les historiques/cycles, prêt pour le multi-utilisateur (V1.0) |
 | Génération PDF / factures | Python (script ou micro-service séparé, ex. `reportlab`/`weasyprint`) | Appelé uniquement pour les rapports de cycle (module 9) et les factures de vente — pas de logique métier côté Python |
 | Auth | JWT ou session + bcrypt | Suffisant pour 1 à quelques utilisateurs (évolutif en V1.0) |
@@ -60,7 +60,7 @@ multi-utilisateur de la V1.0.
 
 ## 2. Modèle de données (vue d'ensemble)
 
-Le schéma complet est défini dans **`schema-avicole.sql`** (PostgreSQL,
+Le schéma complet est défini dans **`schema-avipoul.sql`** (PostgreSQL,
 18 tables organisées par module, avec contraintes, index et deux vues
 utilitaires `v_cycles_effectif_vivant` et `v_cycles_finances`). Ce fichier
 est la référence à partir de laquelle les modèles Sequelize (`@nestjs/sequelize`,
@@ -120,7 +120,7 @@ charges le dit explicitement : sans cycle, rien d'autre n'a de sens.
 **Objectif :** gérer un cycle d'élevage de bout en bout, même basique.
 
 - [ ] Squelette repo : backend (Nest CLI + TS + `@nestjs/sequelize`), frontend (Vite + React + TS + Chakra), connexion PostgreSQL
-- [ ] Exécuter `schema-avicole.sql` sur la base PostgreSQL locale (bootstrap du schéma)
+- [ ] Exécuter `schema-avipoul.sql` sur la base PostgreSQL locale (bootstrap du schéma)
 - [ ] Authentification simple (1 utilisateur admin) via module `auth` (Guard + stratégie JWT)
 - [ ] Modules Nest + entités Sequelize (`users`, `cycles`, `mouvements_stock`, `mortalites`, `parametrages`)
 - [ ] Écran Paramétrage minimal : coûts standards, prix de vente
@@ -193,7 +193,7 @@ charges le dit explicitement : sans cycle, rien d'autre n'a de sens.
 5. *Mobile et offline* ⌛
   - **Audit et responsive** : Tester et corriger l'affichage mobile des pages de saisie ✅
   - **Saisie rapide terrain** : Mode compact pour Stocks, Mortalité, Ventes ✅
-  - **Prototype offline** : Étude de faisabilité (Service Worker + IndexedDB + sync queue)
+  - **Prototype offline** : Étude de faisabilité (Service Worker + IndexedDB + sync queue) ⌛
 
 6. *Sauvegarde* ⌛
   - **Script backup automatique** : Cron PostgreSQL dump vers stockage externe
@@ -276,8 +276,8 @@ charges le dit explicitement : sans cycle, rien d'autre n'a de sens.
 ## 5. Suggestion d'organisation du dépôt
 
 ```
-avicole/
-├── AVICOLE.md                 ← ce fichier
+avipoul/
+├── AVIPOUL.md                 ← ce fichier
 ├── backend/                   (NestJS + TypeScript + Sequelize)
 │   ├── src/
 │   │   ├── cycles/              (module/controller/service/entity — V0.1)
@@ -290,7 +290,7 @@ avicole/
 │   │   ├── auth/                       (guards, stratégie JWT, rôles)
 │   │   ├── common/                      (jobs cron : alertes auto, sauvegardes)
 │   │   └── app.module.ts
-│   ├── migrations/              (sequelize-cli, dérivées de schema-avicole.sql)
+│   ├── migrations/              (sequelize-cli, dérivées de schema-avipoul.sql)
 │   └── .sequelizerc
 ├── frontend/                  (React + Vite + TypeScript + Chakra UI)
 │   └── src/
@@ -301,8 +301,8 @@ avicole/
 │   ├── main.py                  (Flask/FastAPI minimal ou script CLI)
 │   └── templates/
 └── docs/
-    ├── Cahier_des_charges_systeme_gestion_avicole.pdf
-    ├── schema-avicole.sql
+    ├── Cahier_des_charges_systeme_gestion_avipoul.pdf
+    ├── schema-avipoul.sql
     └── guide-utilisateur.md
 ```
 

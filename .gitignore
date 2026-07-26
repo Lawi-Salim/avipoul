@@ -33,5 +33,13 @@ coverage/
 
 # Misc
 *.sql
-!db/schema-avicole.sql
+*.sql.gz
+!db/schema-avipoul.sql
 !backend/migrations/*.sql
+
+# Backup
+backend/backups/
+
+# Service
+pdf-service/pdf-service-start.bat
+

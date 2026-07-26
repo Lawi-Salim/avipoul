@@ -616,6 +616,7 @@ export default function Parametrage() {
           </Button>
         </CardBody>
       </Card>
+
     </VStack>
   );
 }

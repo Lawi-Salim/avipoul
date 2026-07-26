@@ -36,7 +36,7 @@ Le service est disponible sur `http://localhost:8000`.
 
 ```bash
 # Construire l'image localement
-docker build -t avicole-pdf-service .
+docker build -t avipoul-pdf-service .
 
 # Ou avec docker-compose (recommandé)
 docker compose build
@@ -75,10 +75,10 @@ docker compose restart
 
 ```bash
 docker run -d \
-  --name avicole-pdf-service \
+  --name avipoul-pdf-service \
   -p 8000:8000 \
   -v $(pwd):/app \
-  avicole-pdf-service
+  avipoul-pdf-service
 ```
 
 ## Endpoints

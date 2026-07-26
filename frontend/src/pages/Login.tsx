@@ -58,11 +58,11 @@ export default function Login() {
                 <Image
                   // src={colorMode === 'light' ? logoLight : logoDark}
                   src={logo}
-                  alt="AVICOLE"
+                  alt="AVIPOUL"
                   h="40px"
                 />
               </HStack>
-              <Text color="text.3" fontSize="sm">Gestion avicole — Connexion</Text>
+              <Text color="text.3" fontSize="sm">Gestion avipoul — Connexion</Text>
             </VStack>
 
             {error && (

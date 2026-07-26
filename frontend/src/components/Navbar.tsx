@@ -35,7 +35,7 @@ export default function Navbar() {
             _hover={{ opacity: 0.8 }}
           >
             <Text fontSize="lg" fontWeight="bold" color="accent.1">
-              AVICOLE
+              AVIPOUL
             </Text>
           </HStack>
 

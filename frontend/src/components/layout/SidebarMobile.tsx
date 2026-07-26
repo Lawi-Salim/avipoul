@@ -83,7 +83,7 @@ function SidebarHeader() {
         <Image
           // src={colorMode === 'light' ? logoLight : logoDark}
           src={logo}
-          alt="AVICOLE"
+          alt="AVIPOUL"
           h={{ base: '32px', sm: '36px', md: '40px' }}
         />
 
@@ -249,7 +249,7 @@ function SidebarUser() {
           {user?.nom || 'Utilisateur'}
         </Text>
         <Text fontSize={responsiveText.xs} color="sidebar.text" noOfLines={1}>
-          {user?.email || 'email@avicole.com'}
+          {user?.email || 'email@avipoul.com'}
         </Text>
       </VStack>
       <Tooltip label="Déconnexion" placement="top">

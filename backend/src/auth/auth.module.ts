@@ -13,7 +13,7 @@ import { JwtStrategy } from './jwt.strategy.js';
     SequelizeModule.forFeature([User]),
     PassportModule,
     JwtModule.register({
-      secret: process.env.JWT_SECRET || 'avicole-secret-key',
+      secret: process.env.JWT_SECRET || 'avipoul-secret-key',
       signOptions: { expiresIn: '24h' },
     }),
   ],

@@ -1,5 +1,5 @@
 /**
- * Design Tokens Centralises - Avicole
+ * Design Tokens Centralises - Avipoul
  *
  * Ce fichier contient tous les tokens de design responsive utilises dans l'application.
  * Utilise ces tokens pour garantir la coherence visuelle sur tous les ecrans.

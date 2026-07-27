@@ -43,3 +43,14 @@ backend/backups/
 # Service
 pdf-service/pdf-service-start.bat
 
+# Référence privée
+backend/.api-endpoints.md
+
+# Tâches
+backup-daily.bat 
+WINDOWS-SCHEDULED-TASK.md
+
+# Les fichiers dossiers à ignorer
+ignore/
+__pycache__/
+*.pyc

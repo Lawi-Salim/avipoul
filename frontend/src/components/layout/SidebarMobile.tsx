@@ -33,6 +33,7 @@ import logo from '../../assets/img/logo.png';
 import { cyclesService } from '../../services/cycles.service';
 import { ventesService } from '../../services/ventes.service';
 import { responsiveText } from '../../theme/designTokens';
+import ConfirmModal from '../ConfirmModal';
 
 interface NavItemProps {
   icon: ReactNode;
@@ -134,34 +135,34 @@ function SidebarNav() {
     fetchImpayeCount();
   }, []);
 
-  const isAdmin = user?.role === 'admin';
+  const role = user?.role;
 
   const sections = [
     {
       label: 'ADMINISTRATION',
       items: [
-        { icon: <FiHome />, label: 'Vue d\'ensemble', path: '/dashboard' },
-        { icon: <FiSettings />, label: 'Paramètres', path: '/parametrage', adminOnly: false },
-        { icon: <FiUsers />, label: 'Utilisateurs', path: '/utilisateurs', adminOnly: true },
+        { icon: <FiHome />, label: 'Vue d\'ensemble', path: '/dashboard', roles: ['admin', 'employe', 'comptable'] },
+        { icon: <FiSettings />, label: 'Paramètres', path: '/parametrage', roles: ['admin'] },
+        { icon: <FiUsers />, label: 'Utilisateurs', path: '/utilisateurs', roles: ['admin'] },
       ],
     },
     {
       label: 'GESTION',
       items: [
-        { icon: <FiGrid />, label: 'Cycles', path: '/cycles' },
-        { icon: <FiPackage />, label: 'Stocks', path: '/stocks' },
-        { icon: <FiPackage />, label: 'Produits vétérinaires', path: '/produits-veterinaires' },
-        { icon: <FiHeart />, label: 'Santé', path: '/sante' },
-        { icon: <FiDollarSign />, label: 'Finances', path: '/depenses' },
-        { icon: <FiShoppingBag />, label: 'Ventes', path: '/ventes' },
-        { icon: <FiUser />, label: 'Clients', path: '/clients' },
+        { icon: <FiGrid />, label: 'Cycles', path: '/cycles', roles: ['admin', 'employe', 'comptable'] },
+        { icon: <FiPackage />, label: 'Stocks', path: '/stocks', roles: ['admin', 'employe'] },
+        { icon: <FiPackage />, label: 'Produits vétérinaires', path: '/produits-veterinaires', roles: ['admin', 'employe'] },
+        { icon: <FiHeart />, label: 'Santé', path: '/sante', roles: ['admin', 'employe'] },
+        { icon: <FiDollarSign />, label: 'Finances', path: '/depenses', roles: ['admin', 'comptable'] },
+        { icon: <FiShoppingBag />, label: 'Ventes', path: '/ventes', roles: ['admin', 'employe', 'comptable'] },
+        { icon: <FiUser />, label: 'Clients', path: '/clients', roles: ['admin', 'comptable'] },
       ],
     },
     {
       label: 'RAPPORTS',
       items: [
-        { icon: <FiAlertTriangle />, label: 'Risques', path: '/risques' },
-        { icon: <FiFileText />, label: 'Bilans', path: '/bilans' },
+        { icon: <FiAlertTriangle />, label: 'Risques', path: '/risques', roles: ['admin', 'employe'] },
+        { icon: <FiFileText />, label: 'Bilans', path: '/bilans', roles: ['admin', 'comptable'] },
       ],
     },
   ];
@@ -169,7 +170,7 @@ function SidebarNav() {
   return (
     <VStack spacing={0} align="stretch" flex={1} overflowY="auto" px={2} py={2}>
       {sections.map((section, sIdx) => {
-        const visibleItems = section.items.filter((item: any) => !item.adminOnly || isAdmin);
+        const visibleItems = section.items.filter((item: any) => !role || item.roles.includes(role));
         if (visibleItems.length === 0) return null;
         return (
         <Box key={section.label}>
@@ -225,6 +226,7 @@ function SidebarNav() {
 function SidebarUser() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
 
   const handleLogout = () => {
     logout();
@@ -240,7 +242,7 @@ function SidebarUser() {
       borderColor="sidebar.userBorder"
     >
       <UserAvatar
-        name={user?.nom}
+        name={`${user?.nom} ${user?.prenom || ''}`.trim()}
         size={36}
         src={user?.photo ?? null}
       />
@@ -260,9 +262,17 @@ function SidebarUser() {
           variant="ghost"
           color="sidebar.text"
           _hover={{ color: 'red.300', bg: 'sidebar.bgHover' }}
-          onClick={handleLogout}
+          onClick={() => setShowLogoutConfirm(true)}
         />
       </Tooltip>
+      <ConfirmModal
+        isOpen={showLogoutConfirm}
+        onClose={() => setShowLogoutConfirm(false)}
+        onConfirm={handleLogout}
+        title="Déconnexion"
+        message="Voulez-vous vraiment vous déconnecter ?"
+        confirmLabel="Déconnexion"
+      />
     </HStack>
   );
 }

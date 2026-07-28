@@ -206,9 +206,11 @@ export default function Utilisateurs() {
                       <Tooltip label="Modifier">
                         <IconButton aria-label="Modifier" icon={<FiEdit2 />} size={{ base: "sm", md: "xs" }} variant="ghost" color="accent.1" onClick={() => openEdit(u)} />
                       </Tooltip>
-                      <Tooltip label="Supprimer">
-                        <IconButton aria-label="Supprimer" icon={<FiTrash2 />} size={{ base: "sm", md: "xs" }} variant="ghost" color="danger.1" onClick={() => setDeleteTargetId(u.id)} />
-                      </Tooltip>
+                      {u.role !== 'admin' && (
+                        <Tooltip label="Supprimer">
+                          <IconButton aria-label="Supprimer" icon={<FiTrash2 />} size={{ base: "sm", md: "xs" }} variant="ghost" color="danger.1" onClick={() => setDeleteTargetId(u.id)} />
+                        </Tooltip>
+                      )}
                     </HStack>
                   </Td>
                 </Tr>

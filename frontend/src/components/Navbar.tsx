@@ -6,12 +6,14 @@ import { useAuth } from '../contexts/AuthContext';
 import { UserAvatar } from '../utils/Avatars';
 import { useNavigate } from 'react-router-dom';
 import ProfilModal from './ProfilModal';
+import ConfirmModal from './ConfirmModal';
 
 export default function Navbar() {
   const { colorMode, toggleThemeMode } = useThemeMode();
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const [showProfilModal, setShowProfilModal] = useState(false);
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
 
   return (
     <>
@@ -118,10 +120,7 @@ export default function Navbar() {
                   _hover={{ bg: 'surface.2' }}
                   icon={<FiLogOut />}
                   color="danger.1"
-                  onClick={() => {
-                    logout();
-                    navigate('/login');
-                  }}
+                  onClick={() => setShowLogoutConfirm(true)}
                   fontSize={{ base: "md", md: "sm" }}
                 >
                   Déconnexion
@@ -134,6 +133,14 @@ export default function Navbar() {
     </Box>
 
     <ProfilModal isOpen={showProfilModal} onClose={() => setShowProfilModal(false)} user={user} />
+    <ConfirmModal
+      isOpen={showLogoutConfirm}
+      onClose={() => setShowLogoutConfirm(false)}
+      onConfirm={() => { logout(); navigate('/login'); }}
+      title="Déconnexion"
+      message="Voulez-vous vraiment vous déconnecter ?"
+      confirmLabel="Déconnexion"
+    />
     </>
   );
 }

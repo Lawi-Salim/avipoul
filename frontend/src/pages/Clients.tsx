@@ -443,7 +443,7 @@ export default function Clients() {
       </HStack>
 
       {filteredClients.length === 0 ? (
-        <Text color="text.3" textAlign="center" py={6}>
+        <Text color="text.3" fontSize="sm" textAlign="center" py={6}>
           {clients.length === 0 ? 'Aucun client enregistré.' : 'Aucun client ne correspond aux filtres.'}
         </Text>
       ) : (

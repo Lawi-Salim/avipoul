@@ -105,7 +105,7 @@ export default function Cycles() {
       </HStack>
 
       {filtered.length === 0 ? (
-        <Text color="text.3" textAlign="center" py={10}>Aucun cycle trouvé.</Text>
+        <Text color="text.3" textAlign="center" fontSize="sm" py={10}>Aucun cycle trouvé.</Text>
       ) : (
         <SimpleGrid columns={{ base: 1, md: 2, lg: 3 }} spacing={4}>
           {filtered.map((cycle) => (

@@ -1,4 +1,4 @@
-const API_BASE_URL = 'http://localhost:4000';
+const API_BASE_URL = (import.meta as any).env?.VITE_API_URL || 'http://localhost:4000';
 
 export function resolvePublicApiUrl(path: string | null): string | null {
   if (!path) return null;

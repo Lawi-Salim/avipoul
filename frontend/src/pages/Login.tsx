@@ -110,6 +110,7 @@ export default function Login() {
                     pr="2.5rem"
                     required
                     borderRadius="md"
+                    autoComplete="new-password"
                   />
                   {/* Contrainte de hauteur h={8} pour s'aligner parfaitement sur l'input */}
                   <InputRightElement h={8} w="2.5rem">

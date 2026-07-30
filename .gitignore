@@ -54,3 +54,9 @@ WINDOWS-SCHEDULED-TASK.md
 ignore/
 __pycache__/
 *.pyc
+
+# Tauri build output
+frontend/src-tauri/target/
+
+# Release notes (auto-generated)
+RELEASE-NOTES*

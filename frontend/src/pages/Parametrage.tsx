@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { downloadFile } from '../utils/downloadFile';
 import {
   Box,
   Button,
@@ -138,14 +139,7 @@ export default function Parametrage() {
     try {
       const response = await exportService.exportDonneesBrutes();
       const blob = new Blob([response.data], { type: 'text/csv;charset=utf-8' });
-      const url = window.URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = 'donnees-brutes-export.csv';
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(url);
+      await downloadFile(blob, 'donnees-brutes-export.csv');
     } catch {
       setError('Erreur lors de l\'export des données brutes');
     } finally {

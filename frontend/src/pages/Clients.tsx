@@ -1,4 +1,5 @@
 import { useEffect, useState, useMemo } from 'react';
+import { downloadFile } from '../utils/downloadFile';
 import { useNavigate } from 'react-router-dom';
 import {
   Box,
@@ -141,14 +142,7 @@ export default function Clients() {
     try {
       const response = await exportService.exportClients();
       const blob = new Blob([response.data], { type: 'text/csv;charset=utf-8' });
-      const url = window.URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = 'clients-export.csv';
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(url);
+      await downloadFile(blob, 'clients-export.csv');
     } catch {
       setError('Erreur lors de l\'export CSV');
     } finally {

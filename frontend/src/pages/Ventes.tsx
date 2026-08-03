@@ -1,4 +1,5 @@
 import { useEffect, useState, useCallback, useMemo } from 'react';
+import { downloadFile } from '../utils/downloadFile';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
   Box,
@@ -263,14 +264,7 @@ export default function Ventes() {
     try {
       const response = await ventesService.exportFacturePdf(venteId);
       const blob = new Blob([response.data], { type: 'application/pdf' });
-      const url = window.URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = `facture-${venteId}.pdf`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(url);
+      await downloadFile(blob, `facture-${venteId}.pdf`);
     } catch {
       setError('Erreur lors de la génération de la facture. Vérifiez que le service PDF est actif.');
     } finally {
@@ -286,14 +280,7 @@ export default function Ventes() {
         filterStatut !== 'tous' ? filterStatut : undefined,
       );
       const blob = new Blob([response.data], { type: 'text/csv;charset=utf-8' });
-      const url = window.URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = 'ventes-export.csv';
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(url);
+      await downloadFile(blob, 'ventes-export.csv');
     } catch {
       setError('Erreur lors de l\'export CSV');
     } finally {

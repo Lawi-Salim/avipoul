@@ -34,11 +34,21 @@ export class Mortalite extends Model {
   @Column({ type: DataType.UUID, allowNull: true, onDelete: 'SET NULL' })
   declare created_by: string | null;
 
+  @Column({ type: DataType.DATE, allowNull: true })
+  declare valide_le: Date | null;
+
+  @ForeignKey(() => User)
+  @Column({ type: DataType.UUID, allowNull: true, onDelete: 'SET NULL' })
+  declare valide_par: string | null;
+
   @BelongsTo(() => Cycle)
   cycle!: Cycle;
 
   @BelongsTo(() => User)
   creator!: User;
+
+  @BelongsTo(() => User)
+  valideur!: User;
 
   @CreatedAt
   @Column({ type: DataType.DATE, allowNull: false })

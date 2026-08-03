@@ -7,6 +7,7 @@ export interface Depense {
   montant: number;
   date: string;
   description: string | null;
+  creator?: { id: string; nom: string; prenom: string };
 }
 
 export interface CreateDepensePayload {

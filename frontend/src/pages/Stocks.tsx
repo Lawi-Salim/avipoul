@@ -30,6 +30,7 @@ import { cyclesService, Cycle } from '../services/cycles.service';
 import { stocksService, Stock, CreateStockPayload } from '../services/stocks.service';
 import ConfirmModal from '../components/ConfirmModal';
 import { responsiveText } from '../theme/designTokens';
+import { creatorLabel } from '../utils/creatorLabel';
 
 const TYPE_LABELS: Record<string, string> = {
   aliment: 'Aliment',
@@ -387,6 +388,7 @@ export default function Stocks() {
                 <Th color="text.3">Quantité</Th>
                 <Th color="text.3">Coût</Th>
                 <Th color="text.3">Fournisseur</Th>
+                <Th color="text.3">Enregistré par</Th>
                 <Th />
               </Tr>
             </Thead>
@@ -405,6 +407,7 @@ export default function Stocks() {
                   <Td color="text.2">{Number(s.quantite).toLocaleString('fr-FR')}</Td>
                   <Td color="text.2" minW={{ base: "100px", md: "auto" }}>{Number(s.cout).toLocaleString('fr-FR')} KMF</Td>
                   <Td color="text.2">{s.fournisseur || '—'}</Td>
+                  <Td color="text.3" fontSize="xs">{creatorLabel(s.creator)}</Td>
                   <Td>
                     {selectedCycleData?.statut === 'en_cours' && (
                       <Tooltip label="Supprimer">

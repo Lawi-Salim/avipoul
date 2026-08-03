@@ -42,6 +42,7 @@ export class CyclesController {
     return this.cyclesService.getFinances(id);
   }
 
+  @Roles('admin', 'comptable')
   @Post()
   create(
     @Body() dto: CreateCycleDto,
@@ -53,14 +54,22 @@ export class CyclesController {
     });
   }
 
+  @Roles('admin', 'comptable')
   @Patch(':id')
   update(@Param('id') id: string, @Body() dto: UpdateCycleDto) {
     return this.cyclesService.update(id, dto);
   }
 
+  @Roles('admin', 'comptable')
   @Patch(':id/phase')
   updatePhase(@Param('id') id: string, @Body() dto: UpdatePhaseDto) {
     return this.cyclesService.updatePhase(id, dto.phase);
+  }
+
+  @Roles('admin')
+  @Get(':id/verification-cloture')
+  verifierCloture(@Param('id') id: string) {
+    return this.cyclesService.verifierCloture(id);
   }
 
   @Roles('admin')

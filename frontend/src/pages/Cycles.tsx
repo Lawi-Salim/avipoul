@@ -19,6 +19,7 @@ import {
 } from '@chakra-ui/react';
 import { FiPlus, FiChevronDown } from 'react-icons/fi';
 import { cyclesService, Cycle } from '../services/cycles.service';
+import { useAuth } from '../contexts/AuthContext';
 import { UserAvatar } from '../utils/Avatars';
 import { responsiveText } from '../theme/designTokens';
 
@@ -41,6 +42,7 @@ export default function Cycles() {
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<string>('tous');
   const navigate = useNavigate();
+  const { user } = useAuth();
 
   useEffect(() => {
     cyclesService.getAll()
@@ -59,18 +61,20 @@ export default function Cycles() {
     <VStack spacing={6} align="stretch">
       <HStack justify="space-between" flexWrap="wrap" gap={4}>
         <Heading size={{ base: "md", md: "lg" }} color="text.1">Cycles</Heading>
-        <Button
-          leftIcon={<FiPlus />}
-          bg="accent.1"
-          color="gray.900"
-          _hover={{ bg: 'accent.2' }}
-          fontWeight="bold"
-          onClick={() => navigate('/cycles/nouveau')}
-          fontSize={responsiveText.sm}
-          size={{ base: "sm", md: "sm" }}
-        >
-          Nouveau cycle
-        </Button>
+        {user?.role !== 'employe' && (
+          <Button
+            leftIcon={<FiPlus />}
+            bg="accent.1"
+            color="gray.900"
+            _hover={{ bg: 'accent.2' }}
+            fontWeight="bold"
+            onClick={() => navigate('/cycles/nouveau')}
+            fontSize={responsiveText.sm}
+            size={{ base: "sm", md: "sm" }}
+          >
+            Nouveau cycle
+          </Button>
+        )}
       </HStack>
 
       <HStack>
@@ -107,7 +111,7 @@ export default function Cycles() {
       {filtered.length === 0 ? (
         <Text color="text.3" textAlign="center" fontSize="sm" py={10}>Aucun cycle trouvé.</Text>
       ) : (
-        <SimpleGrid columns={{ base: 1, md: 2, lg: 3 }} spacing={4}>
+        <SimpleGrid columns={{ base: 2, md: 3, lg: 4 }} spacing={4}>
           {filtered.map((cycle) => (
             <Card
               key={cycle.id}

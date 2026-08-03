@@ -35,6 +35,12 @@ const DEFAULTS = {
   prix_vente_standard: 0,
   seuil_mortalite_critique_pct: 5,
   seuil_stock_bas_jours: 3,
+  duree_phase_preparation: 2,
+  duree_phase_demarrage: 7,
+  duree_phase_croissance: 21,
+  duree_phase_finition: 7,
+  duree_phase_commercialisation: 7,
+  duree_phase_nettoyage: 2,
 };
 
 const FIELDS = [
@@ -42,6 +48,12 @@ const FIELDS = [
   { key: 'prix_vente_standard' as const, label: 'Prix de vente standard (KMF)', desc: 'Prix de vente unitaire recommandé' },
   { key: 'seuil_mortalite_critique_pct' as const, label: 'Seuil mortalité critique (%)', desc: 'Pourcentage déclenchant une alerte criticité' },
   { key: 'seuil_stock_bas_jours' as const, label: 'Seuil stock bas (jours)', desc: 'Nombre de jours de stock restant déclenchant une alerte' },
+  { key: 'duree_phase_preparation' as const, label: 'Durée préparation (jours)', desc: 'Nettoyage et préparation du poulailler avant réception' },
+  { key: 'duree_phase_demarrage' as const, label: 'Durée démarrage (jours)', desc: 'Chauffage et soins des poussins après réception' },
+  { key: 'duree_phase_croissance' as const, label: 'Durée croissance (jours)', desc: 'Alimentation et vaccination pendant la croissance' },
+  { key: 'duree_phase_finition' as const, label: 'Durée finition (jours)', desc: 'Aliment finition et prise de poids avant vente' },
+  { key: 'duree_phase_commercialisation' as const, label: 'Durée commercialisation (jours)', desc: 'Vente des poulets aux clients' },
+  { key: 'duree_phase_nettoyage' as const, label: 'Durée nettoyage (jours)', desc: 'Désinfection après clôture du cycle' },
 ];
 
 export default function Parametrage() {
@@ -104,6 +116,12 @@ export default function Parametrage() {
         prix_vente_standard: data.prix_vente_standard,
         seuil_mortalite_critique_pct: data.seuil_mortalite_critique_pct,
         seuil_stock_bas_jours: data.seuil_stock_bas_jours,
+        duree_phase_preparation: data.duree_phase_preparation,
+        duree_phase_demarrage: data.duree_phase_demarrage,
+        duree_phase_croissance: data.duree_phase_croissance,
+        duree_phase_finition: data.duree_phase_finition,
+        duree_phase_commercialisation: data.duree_phase_commercialisation,
+        duree_phase_nettoyage: data.duree_phase_nettoyage,
       });
       setData(updated);
       setSuccess(true);

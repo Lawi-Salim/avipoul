@@ -24,6 +24,7 @@ export interface Vente {
   categorie_produit: CategorieProduit;
   remise: number;
   client?: { id: string; nom: string; type_client: string };
+  creator?: { id: string; nom: string; prenom: string };
 }
 
 export interface CreateVentePayload {

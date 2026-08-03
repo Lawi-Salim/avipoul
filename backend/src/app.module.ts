@@ -31,6 +31,9 @@ import { RapportsModule } from './rapports/rapports.module.js';
 import { RemisesModule } from './remises/remises.module.js';
 import { RemiseConfiguration } from './remises/remise.entity.js';
 import { ExportModule } from './export/export.module.js';
+import { ValidationsModule } from './validations/validations.module.js';
+import { NotificationsModule } from './notifications/notifications.module.js';
+import { RechercheModule } from './recherche/recherche.module.js';
 
 @Module({
   imports: [
@@ -57,6 +60,9 @@ import { ExportModule } from './export/export.module.js';
     RapportsModule,
     RemisesModule,
     ExportModule,
+    ValidationsModule,
+    NotificationsModule,
+    RechercheModule,
   ],
   controllers: [AppController],
   providers: [AppService],

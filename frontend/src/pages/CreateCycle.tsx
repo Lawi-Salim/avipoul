@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Box,
@@ -12,14 +12,18 @@ import {
   Alert,
   AlertIcon,
   HStack,
+  Spinner,
+  Center,
 } from '@chakra-ui/react';
 import { FiArrowLeft } from 'react-icons/fi';
-import { cyclesService } from '../services/cycles.service';
+import { cyclesService, Cycle } from '../services/cycles.service';
 import { responsiveText } from '../theme/designTokens';
 
 export default function CreateCycle() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
+  const [checking, setChecking] = useState(true);
+  const [enCoursCycle, setEnCoursCycle] = useState<Cycle | null>(null);
   const [error, setError] = useState('');
   const [form, setForm] = useState({
     numero_cycle: '',
@@ -27,6 +31,14 @@ export default function CreateCycle() {
     effectif_initial: 0,
     cout_achat_poussins: 0,
   });
+
+  useEffect(() => {
+    cyclesService
+      .getAll()
+      .then((c) => setEnCoursCycle(c.find((cy) => cy.statut === 'en_cours') || null))
+      .catch(() => {})
+      .finally(() => setChecking(false));
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -42,6 +54,10 @@ export default function CreateCycle() {
       setLoading(false);
     }
   };
+
+  if (checking) {
+    return <Center py={20}><Spinner size="xl" color="accent.1" /></Center>;
+  }
 
   return (
     <VStack spacing={2} align="stretch" maxW={{ base: "100%", md: "600px" }} mx="auto" px={{ base: 4, md: 0 }}>
@@ -64,6 +80,36 @@ export default function CreateCycle() {
         <Alert bg="danger.1" color="white" borderRadius="md" size="sm">
           <AlertIcon />
           {error}
+        </Alert>
+      )}
+
+      {enCoursCycle && (
+        <Alert
+          bg="orange.400"
+          color="white"
+          borderRadius="md"
+          size="sm"
+          alignItems="flex-start"
+        >
+          <AlertIcon />
+          <Box flex="1">
+            <Text fontSize="sm" fontWeight="bold">
+              Un cycle est déjà en cours (#{enCoursCycle.numero_cycle})
+            </Text>
+            <Text fontSize="sm">
+              Clôturez-le avant de créer un nouveau cycle.
+            </Text>
+            <Button
+              size="xs"
+              mt={2}
+              bg="white"
+              color="orange.600"
+              fontWeight="bold"
+              onClick={() => navigate('/bilans')}
+            >
+              Clôturer le cycle en cours
+            </Button>
+          </Box>
         </Alert>
       )}
 
@@ -141,10 +187,11 @@ export default function CreateCycle() {
               _hover={{ bg: 'accent.2' }}
               w="full"
               isLoading={loading}
+              isDisabled={enCoursCycle !== null}
               fontWeight="bold"
               size={{ base: "sm", md: "sm" }}
             >
-              Créer le cycle
+              {enCoursCycle ? 'Clôturez d\'abord le cycle en cours' : 'Créer le cycle'}
             </Button>
           </VStack>
         </CardBody>

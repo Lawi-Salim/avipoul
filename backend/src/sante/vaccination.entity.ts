@@ -11,6 +11,7 @@ import {
 } from 'sequelize-typescript';
 import { Cycle } from '../cycles/cycle.entity.js';
 import { ProduitVeterinaire } from '../stocks/produit-veterinaire.entity.js';
+import { User } from '../auth/user.entity.js';
 
 @Table({ tableName: 'vaccinations', timestamps: true })
 export class Vaccination extends Model {
@@ -41,11 +42,18 @@ export class Vaccination extends Model {
   @Column({ type: DataType.TEXT, allowNull: true })
   declare notes: string | null;
 
+  @ForeignKey(() => User)
+  @Column({ type: DataType.UUID, allowNull: true, onDelete: 'SET NULL' })
+  declare created_by: string | null;
+
   @BelongsTo(() => Cycle)
   cycle!: Cycle;
 
   @BelongsTo(() => ProduitVeterinaire)
   produit_veterinaire!: ProduitVeterinaire;
+
+  @BelongsTo(() => User)
+  creator!: User;
 
   @CreatedAt
   @Column({ type: DataType.DATE, allowNull: false })

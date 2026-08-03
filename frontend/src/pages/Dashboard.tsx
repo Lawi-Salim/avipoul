@@ -26,7 +26,7 @@ import {
   Badge,
   IconButton,
 } from '@chakra-ui/react';
-import { FiArrowUpRight, FiArrowDownRight, FiCheck, FiAlertTriangle, FiAlertCircle, FiInfo, FiDownload, FiChevronDown } from 'react-icons/fi';
+import { FiArrowUpRight, FiArrowDownRight, FiCheck, FiAlertTriangle, FiAlertCircle, FiInfo, FiDownload, FiChevronDown, FiCheckCircle, FiCircle, FiArrowRight } from 'react-icons/fi';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 import { cyclesService, Cycle } from '../services/cycles.service';
 import { exportService } from '../services/export.service';
@@ -34,6 +34,9 @@ import { santeService, Mortalite } from '../services/sante.service';
 import { ventesService, Vente } from '../services/ventes.service';
 import { depensesService, Depense } from '../services/depenses.service';
 import { alertesService, Alerte } from '../services/alertes.service';
+import { stocksService, Stock } from '../services/stocks.service';
+import { vaccinationsService, Vaccination } from '../services/vaccinations.service';
+import { useAuth } from '../contexts/AuthContext';
 import Pagination from '../components/Pagination';
 
 const TREND_THRESHOLD = 0.05;
@@ -50,8 +53,40 @@ function TrendArrow({ value, invert }: { value: number; invert?: boolean }) {
   );
 }
 
+function JournalItem({ done, label, path }: { done: boolean; label: string; path: string }) {
+  const navigate = useNavigate();
+  return (
+    <HStack
+      as="button"
+      w="100%"
+      justifyContent="space-between"
+      px={3}
+      py={2}
+      borderRadius="md"
+      borderWidth="1px"
+      borderColor="border.1"
+      bg="surface.2"
+      _hover={{ bg: 'surface.3' }}
+      onClick={() => navigate(path)}
+      textAlign="left"
+    >
+      <HStack spacing={2}>
+        <Box color={done ? 'success.1' : 'text.3'}>
+          {done ? <FiCheckCircle /> : <FiCircle />}
+        </Box>
+        <Text fontSize={{ base: "sm", md: "ms" }} color={done ? 'text.1' : 'text.3'} fontWeight={done ? 'medium' : 'normal'}>
+          {label}
+        </Text>
+      </HStack>
+      <FiArrowRight color="text.3" />
+    </HStack>
+  );
+}
+
 export default function Dashboard() {
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const canManage = user?.role !== 'employe';
   const [cycles, setCycles] = useState<Cycle[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -64,6 +99,8 @@ export default function Dashboard() {
   const [depenses, setDepenses] = useState<Depense[]>([]);
   const [closedCycles, setClosedCycles] = useState<Cycle[]>([]);
   const [alertes, setAlertes] = useState<Alerte[]>([]);
+  const [stocks, setStocks] = useState<Stock[]>([]);
+  const [vaccinations, setVaccinations] = useState<Vaccination[]>([]);
   const [exporting, setExporting] = useState(false);
 
   const loadData = useCallback(async () => {
@@ -75,20 +112,39 @@ export default function Dashboard() {
       setCycles(allCycles);
       setAlertes(alertesData);
 
-      const enCours = allCycles.find((c) => c.statut === 'en_cours');
+      const enCoursCycles = allCycles.filter((c) => c.statut === 'en_cours');
+      const enCours = enCoursCycles.length > 0 ? enCoursCycles[0] : undefined;
       const clotures = allCycles.filter((c) => c.statut === 'cloture');
       setClosedCycles(clotures);
 
-      if (enCours) {
-        setCurrentCycle(enCours);
-        const [m, v, d] = await Promise.all([
-          santeService.getByCycle(enCours.id),
-          ventesService.getByCycle(enCours.id),
-          depensesService.getByCycle(enCours.id),
-        ]);
+      if (enCoursCycles.length > 0) {
+        setCurrentCycle(enCours ?? null);
+        const results = await Promise.all(
+          enCoursCycles.map((cy) =>
+            Promise.all([
+              santeService.getByCycle(cy.id),
+              ventesService.getByCycle(cy.id),
+              depensesService.getByCycle(cy.id),
+              stocksService.getByCycle(cy.id),
+              vaccinationsService.getByCycle(cy.id),
+            ])
+          )
+        );
+        const [m, v, d, st, vac] = results.reduce(
+          (acc, [m, v, d, st, vac]) => [
+            [...acc[0], ...m],
+            [...acc[1], ...v],
+            [...acc[2], ...d],
+            [...acc[3], ...st],
+            [...acc[4], ...vac],
+          ],
+          [[], [], [], [], []] as [Mortalite[], Vente[], Depense[], Stock[], Vaccination[]]
+        );
         setMortalites(m);
         setVentes(v);
         setDepenses(d);
+        setStocks(st);
+        setVaccinations(vac);
       }
     } catch {
       setError('Erreur lors du chargement des données');
@@ -105,7 +161,7 @@ export default function Dashboard() {
       cutoff.setMonth(cutoff.getMonth() - period);
       return closedCycles.filter((c) => new Date(c.date_reception) >= cutoff);
     })();
-    result = [...result].sort((a, b) => Number(a.numero_cycle) - Number(b.numero_cycle));
+    result = [...result].sort((a, b) => Number(b.numero_cycle) - Number(a.numero_cycle));
     return result;
   }, [closedCycles, period]);
 
@@ -127,7 +183,7 @@ export default function Dashboard() {
 
   const totalVentesCycle = ventes
     .filter((v) => v.statut_paiement !== 'impaye')
-    .reduce((sum, v) => sum + Number(v.quantite) * Number(v.prix_unitaire), 0);
+    .reduce((sum, v) => sum + Number(v.quantite) * Number(v.prix_unitaire) - Number(v.remise || 0), 0);
 
   const totalDepensesCycle = depenses.reduce((sum, d) => sum + Number(d.montant), 0);
   const tresorerie = totalVentesCycle - totalDepensesCycle;
@@ -136,7 +192,7 @@ export default function Dashboard() {
     : 0));
 
   const chartData = useMemo(() => {
-    return filteredClosedCycles.slice(-10).map((c) => ({
+    return [...filteredClosedCycles].slice(0, 10).reverse().map((c) => ({
       name: `C#${c.numero_cycle}`,
       marge: c.bilan_marge ?? 0,
       recettes: c.bilan_recettes ?? 0,
@@ -145,12 +201,23 @@ export default function Dashboard() {
   }, [filteredClosedCycles]);
 
   const prevMarge = filteredClosedCycles.length >= 2
-    ? filteredClosedCycles[filteredClosedCycles.length - 2]?.bilan_marge ?? 0
+    ? filteredClosedCycles[1]?.bilan_marge ?? 0
     : 0;
   const currMarge = filteredClosedCycles.length >= 1
-    ? filteredClosedCycles[filteredClosedCycles.length - 1]?.bilan_marge ?? 0
+    ? filteredClosedCycles[0]?.bilan_marge ?? 0
     : 0;
   const margeTrend = prevMarge !== 0 ? ((currMarge - prevMarge) / Math.abs(prevMarge)) * 100 : 0;
+
+  const today = new Date().toISOString().slice(0, 10);
+  const journal = {
+    mortalite: mortalites.some((m) => m.date === today),
+    vaccination: (() => {
+      const dues = vaccinations.filter((x) => x.date_prevue === today);
+      return dues.length === 0 || dues.every((x) => x.date_realisee);
+    })(),
+    stock: stocks.some((s) => s.date === today),
+    vente: ventes.some((v) => v.date === today),
+  };
 
   const handleResolveAlerte = async (id: string) => {
     try {
@@ -213,6 +280,25 @@ export default function Dashboard() {
     <VStack spacing={6} align="stretch">
       <Heading size="lg" color="text.1">Vue d'ensemble</Heading>
 
+      {user?.role === 'employe' && (
+        <Card bg="surface.1" borderColor="border.1" borderWidth="1px">
+          <CardBody py={4} px={5}>
+            <HStack justify="space-between" mb={3} flexWrap="wrap" gap={2}>
+              <Heading size="md" color="text.1">Mon journal</Heading>
+              <Badge bg="accent.1" color="gray.900" px={2} py={1} borderRadius="full" textTransform="capitalize">
+                {new Date().toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })}
+              </Badge>
+            </HStack>
+            <SimpleGrid columns={{ base: 2, md: 4 }} spacing={2}>
+              <JournalItem done={journal.mortalite} label="Mortalité du jour saisie" path="/sante" />
+              <JournalItem done={journal.vaccination} label="Vaccination réalisée" path="/sante" />
+              <JournalItem done={journal.stock} label="Stock mis à jour" path="/stocks" />
+              <JournalItem done={journal.vente} label="Ventes encaissées" path="/ventes" />
+            </SimpleGrid>
+          </CardBody>
+        </Card>
+      )}
+
       {error && (
         <Alert bg="danger.1" color="white" borderRadius="md" size="sm">
           <AlertIcon />
@@ -259,14 +345,16 @@ export default function Dashboard() {
                           Voir risques
                         </Button>
                       )}
-                      <IconButton
-                        aria-label="Marquer comme résolue"
-                        icon={<FiCheck />}
-                        size="xs"
-                        variant="ghost"
-                        color="success.1"
-                        onClick={() => handleResolveAlerte(alerte.id)}
-                      />
+                      {canManage && (
+                        <IconButton
+                          aria-label="Marquer comme résolue"
+                          icon={<FiCheck />}
+                          size="xs"
+                          variant="ghost"
+                          color="success.1"
+                          onClick={() => handleResolveAlerte(alerte.id)}
+                        />
+                      )}
                     </HStack>
                   </HStack>
                 </CardBody>
@@ -329,7 +417,7 @@ export default function Dashboard() {
         ) : (
           <Card bg="surface.1" borderColor="border.1" borderWidth="1px">
             <CardBody>
-              <Text color="text.3" textAlign="center" py={4}>Aucun cycle en cours.</Text>
+              <Text color="text.3" textAlign="center" fontSize="sm" py={4}>Aucun cycle en cours.</Text>
             </CardBody>
           </Card>
         )}
@@ -421,7 +509,7 @@ export default function Dashboard() {
         {filteredClosedCycles.length === 0 ? (
           <Card bg="surface.1" borderColor="border.1" borderWidth="1px">
             <CardBody>
-              <Text color="text.3" textAlign="center" py={4}>Aucun cycle clôturé sur cette période.</Text>
+              <Text color="text.3" fontSize="sm" textAlign="center" py={4}>Aucun cycle clôturé sur cette période.</Text>
             </CardBody>
           </Card>
         ) : (
@@ -440,7 +528,7 @@ export default function Dashboard() {
                 </Tr>
               </Thead>
               <Tbody>
-                {[...paginatedClosedCycles].reverse().map((c) => {
+                {paginatedClosedCycles.map((c) => {
                   const mortalitePct = c.effectif_initial > 0 && c.bilan_mortalite_cumulee != null
                     ? ((c.bilan_mortalite_cumulee / c.effectif_initial) * 100)
                     : 0;
@@ -449,15 +537,15 @@ export default function Dashboard() {
                       <Td color="text.2" fontWeight="medium">Cycle #{c.numero_cycle}</Td>
                       <Td color="text.2">{new Date(c.date_reception).toLocaleDateString('fr-FR')}</Td>
                       <Td color="text.2">{c.effectif_initial}</Td>
-                      <Td color="text.2">{(c.bilan_cout_total ?? 0).toLocaleString('fr-FR')} KMF</Td>
-                      <Td color="text.2">{(c.bilan_recettes ?? 0).toLocaleString('fr-FR')} KMF</Td>
+                      <Td color="text.2">{(Number(c.bilan_cout_total) ?? 0).toLocaleString('fr-FR')} KMF</Td>
+                      <Td color="text.2">{(Number(c.bilan_recettes) ?? 0).toLocaleString('fr-FR')} KMF</Td>
                       <Td>
                         <Text
                           fontWeight="bold"
                           color={(c.bilan_marge ?? 0) >= 0 ? 'success.1' : 'danger.1'}
                           fontSize="sm"
                         >
-                          {(c.bilan_marge ?? 0) >= 0 ? '+' : ''}{(c.bilan_marge ?? 0).toLocaleString('fr-FR')} KMF
+                          {(c.bilan_marge ?? 0) >= 0 ? '+' : ''}{(Number(c.bilan_marge) ?? 0).toLocaleString('fr-FR')} KMF
                         </Text>
                       </Td>
                       <Td>

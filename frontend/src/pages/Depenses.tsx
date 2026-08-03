@@ -30,6 +30,7 @@ import { FiPlus, FiTrash2, FiEdit2, FiChevronDown } from 'react-icons/fi';
 import { cyclesService, Cycle } from '../services/cycles.service';
 import { depensesService, Depense, CreateDepensePayload } from '../services/depenses.service';
 import ConfirmModal from '../components/ConfirmModal';
+import { creatorLabel } from '../utils/creatorLabel';
 
 const CATEGORIE_LABELS: Record<string, string> = {
   poussins: 'Poussins',
@@ -343,6 +344,7 @@ export default function Depenses() {
                 <Th color="text.3">Catégorie</Th>
                 <Th color="text.3">Montant</Th>
                 <Th color="text.3">Description</Th>
+                <Th color="text.3">Enregistré par</Th>
                 <Th />
               </Tr>
             </Thead>
@@ -353,6 +355,7 @@ export default function Depenses() {
                   <Td color="text.2">{CATEGORIE_LABELS[d.categorie] || d.categorie}</Td>
                   <Td color="text.2">{Number(d.montant).toLocaleString('fr-FR')} KMF</Td>
                   <Td color="text.2" maxW="200px" isTruncated>{d.description || '—'}</Td>
+                  <Td color="text.3" fontSize="xs">{creatorLabel(d.creator)}</Td>
                   <Td>
                     {selectedCycleData?.statut === 'en_cours' && (
                       <HStack spacing={1}>

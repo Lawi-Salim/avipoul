@@ -1,0 +1,64 @@
+name: Build & Release Avipoul
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-installer:
+    runs-on: windows-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: yarn
+          cache-dependency-path: frontend/yarn.lock
+
+      - name: Enable corepack (yarn)
+        run: corepack enable
+
+      - name: Install frontend deps
+        run: yarn install --frozen-lockfile
+
+      - name: Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Rust cache
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: frontend/src-tauri -> target
+
+      - name: Typecheck frontend
+        run: npm run typecheck
+
+      - name: Build installer (Tauri)
+        run: npm run tauri:build
+
+      - name: Rename setup -> Avipoul_<version>_x64-setup.exe
+        shell: pwsh
+        run: |
+          $dir = "src-tauri/target/release/bundle/nsis"
+          Get-ChildItem $dir -Filter "*_x64-setup.exe" | ForEach-Object {
+            $new = $_.Name -replace '^AVIPOUL_', 'Avipoul_'
+            if ($new -ne $_.Name) {
+              Rename-Item $_.FullName $new -Force
+            }
+          }
+
+      - name: Publish GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: frontend/src-tauri/target/release/bundle/nsis/*_x64-setup.exe
+          generate_release_notes: true

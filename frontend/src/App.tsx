@@ -17,7 +17,9 @@ import Stocks from './pages/Stocks';
 import ProduitsVeterinaires from './pages/ProduitsVeterinaires';
 import Sante from './pages/Sante';
 import Bilans from './pages/Bilans';
+import Cloture from './pages/Cloture';
 import Utilisateurs from './pages/Utilisateurs';
+import Validations from './pages/Validations';
 import RapportPreview from './pages/RapportPreview';
 import FacturePreview from './pages/FacturePreview';
 import FactureGroupeePreview from './pages/FactureGroupeePreview';
@@ -73,6 +75,8 @@ export default function App() {
         <Route path="/produits-veterinaires" element={<ProduitsVeterinaires />} />
         <Route path="/sante" element={<Sante />} />
         <Route path="/bilans" element={<Bilans />} />
+        <Route path="/cycles/:id/cloture" element={<Cloture />} />
+        <Route path="/a-valider" element={<Validations />} />
         <Route path="/cycles/:id/rapport" element={<RapportPreview />} />
         <Route path="/ventes/:id/facture" element={<FacturePreview />} />
         <Route path="/clients/:clientId/cycles/:cycleId/facture" element={<FactureGroupeePreview />} />

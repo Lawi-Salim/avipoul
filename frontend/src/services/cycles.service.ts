@@ -31,6 +31,44 @@ export interface CreateCyclePayload {
   cout_achat_poussins: number;
 }
 
+export interface VerificationCloture {
+  cycle_id: string;
+  numero_cycle: number;
+  statut: string;
+  cloturable: boolean;
+  en_attente: { code: string; label: string; count: number }[];
+  recommandations: { code: string; label: string; count: number }[];
+  effectif: {
+    initial: number;
+    morts: number;
+    vivant: number;
+    taux_mortalite_pct: number;
+  };
+  ventes: {
+    total: number;
+    validees: number;
+    non_validees: number;
+    impayees: number;
+  };
+  sorties_stock: {
+    total: number;
+    validees: number;
+    non_validees: number;
+  };
+  mortalites: {
+    total: number;
+    validees: number;
+    non_validees: number;
+  };
+  finances: {
+    cout_total: number;
+    total_ventes: number;
+    marge: number;
+    cout_revient_par_poulet: number;
+    seuil_rentabilite: number;
+  };
+}
+
 export const cyclesService = {
   getAll: () => api.get<Cycle[]>('/cycles').then((r) => r.data),
 
@@ -45,6 +83,9 @@ export const cyclesService = {
 
   changePhase: (id: string, phase_courante: string) =>
     api.patch<Cycle>(`/cycles/${id}/phase`, { phase: phase_courante }).then((r) => r.data),
+
+  verificationCloture: (id: string) =>
+    api.get<VerificationCloture>(`/cycles/${id}/verification-cloture`).then((r) => r.data),
 
   cloture: (id: string) =>
     api.post<Cycle>(`/cycles/${id}/cloture`).then((r) => r.data),

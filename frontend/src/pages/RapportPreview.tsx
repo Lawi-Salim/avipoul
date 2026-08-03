@@ -1,4 +1,5 @@
 import { useEffect, useState, useRef, useCallback } from 'react';
+import { downloadFile } from '../utils/downloadFile';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
   Box,
@@ -76,14 +77,7 @@ export default function RapportPreview() {
     try {
       const response = await cyclesService.exportPdf(id);
       const blob = new Blob([response.data], { type: 'application/pdf' });
-      const url = window.URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = `rapport-cycle-${cycle.numero_cycle || id}.pdf`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(url);
+      await downloadFile(blob, `rapport-cycle-${cycle.numero_cycle || id}.pdf`);
     } catch {
       setError('Erreur lors du téléchargement du PDF. Vérifiez que le service PDF est actif.');
     } finally {

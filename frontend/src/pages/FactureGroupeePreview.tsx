@@ -1,4 +1,5 @@
 import { useEffect, useState, useRef, useCallback, useMemo } from 'react';
+import { downloadFile } from '../utils/downloadFile';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
   Box,
@@ -87,14 +88,7 @@ export default function FactureGroupeePreview() {
     try {
       const response = await ventesService.exportFactureGroupeePdf(clientId, cycleId);
       const blob = new Blob([response.data], { type: 'application/pdf' });
-      const url = window.URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = `facture-groupee-${client?.nom || clientId}-cycle-${cycle?.numero_cycle || cycleId}.pdf`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(url);
+      await downloadFile(blob, `facture-groupee-${client?.nom || clientId}-cycle-${cycle?.numero_cycle || cycleId}.pdf`);
     } catch {
       setError('Erreur lors du téléchargement du PDF. Vérifiez que le service PDF est actif.');
     } finally {

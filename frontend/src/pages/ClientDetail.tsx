@@ -1,4 +1,5 @@
 import { useEffect, useState, useCallback, useMemo } from 'react';
+import { downloadFile } from '../utils/downloadFile';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
   Box,
@@ -222,14 +223,7 @@ export default function ClientDetail() {
     try {
       const response = await ventesService.exportFactureGroupeePdf(id, dernierCycleAvecVentes.id);
       const blob = new Blob([response.data], { type: 'application/pdf' });
-      const url = window.URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = `facture-groupee-${client?.nom || id}.pdf`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(url);
+      await downloadFile(blob, `facture-groupee-${client?.nom || id}.pdf`);
     } catch {
       toast({ title: 'Erreur lors du téléchargement', status: 'error', duration: 3000 });
     } finally {

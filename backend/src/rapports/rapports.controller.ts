@@ -4,6 +4,7 @@ import { InjectConnection } from '@nestjs/sequelize';
 import { Sequelize } from 'sequelize-typescript';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard.js';
 import { RolesGuard } from '../auth/roles.guard.js';
+import { Roles } from '../auth/roles.decorator.js';
 
 const PDF_SERVICE_URL = process.env.PDF_SERVICE_URL || 'http://localhost:8000';
 
@@ -32,7 +33,7 @@ export class RapportsController {
     );
 
     const ventesRaw = await this.sequelize.query(
-      `SELECT v.date, v.quantite, v.prix_unitaire, v.mode_paiement, v.statut_paiement,
+      `SELECT v.date, v.quantite, v.prix_unitaire, v.remise, v.mode_paiement, v.statut_paiement,
               c.nom AS client_nom, c.type_client AS client_type_client
        FROM ventes v
        LEFT JOIN clients c ON v.client_id = c.id
@@ -45,6 +46,7 @@ export class RapportsController {
       date: v.date,
       quantite: Number(v.quantite),
       prix_unitaire: Number(v.prix_unitaire),
+      remise: Number(v.remise) || 0,
       mode_paiement: v.mode_paiement,
       statut_paiement: v.statut_paiement,
       client: v.client_nom
@@ -53,7 +55,7 @@ export class RapportsController {
     }));
 
     const totalDepenses = (depenses as any[]).reduce((sum, d) => sum + Number(d.montant), 0);
-    const totalVentes = ventes.reduce((sum, v) => sum + (v.quantite * v.prix_unitaire), 0);
+    const totalVentes = ventes.reduce((sum, v) => sum + (v.quantite * v.prix_unitaire - v.remise), 0);
     const totalQuantite = ventes.reduce((sum, v) => sum + v.quantite, 0);
     const effectifInitial = Number(cycle.effectif_initial) || 0;
     const coutAchatPoussins = Number(cycle.cout_achat_poussins) || 0;
@@ -63,7 +65,12 @@ export class RapportsController {
     const totalMortalite = (mortalites as any[]).reduce((sum, m) => sum + Number(m.nombre), 0);
     const effectifVivant = effectifInitial - totalMortalite;
     const coutRevientParPoulet = effectifVivant > 0 ? coutTotal / effectifVivant : 0;
-    const seuilRentabilite = coutTotal / (coutAchatPoussins || 1);
+    const parametrageRows = await this.sequelize.query(
+      `SELECT prix_vente_standard FROM parametrages WHERE actif = true LIMIT 1`,
+      { type: 'SELECT' },
+    );
+    const prixVenteStandard = Number((parametrageRows as any[])[0]?.prix_vente_standard) || 0;
+    const seuilRentabilite = prixVenteStandard > 0 ? Math.ceil(coutTotal / prixVenteStandard) : 0;
 
     return {
       cycle: {
@@ -400,6 +407,7 @@ export class RapportsController {
     };
   }
 
+  @Roles('admin', 'comptable')
   @Get('facture-groupee/:clientId/:cycleId/pdf')
   async getFactureGroupeePdf(
     @Param('clientId') clientId: string,
@@ -444,6 +452,7 @@ export class RapportsController {
     res.send(pdfBuffer);
   }
 
+  @Roles('admin', 'comptable')
   @Get('facture-groupee/:clientId/:cycleId/html')
   async getFactureGroupeeHtml(
     @Param('clientId') clientId: string,
@@ -483,6 +492,7 @@ export class RapportsController {
     res.send(html);
   }
 
+  @Roles('admin', 'comptable')
   @Get('facture/:id/pdf')
   async getFacturePdf(@Param('id') id: string, @Res() res: Response) {
     console.log('[PDF Facture] Début génération pour vente:', id);
@@ -529,6 +539,7 @@ export class RapportsController {
     res.send(pdfBuffer);
   }
 
+  @Roles('admin', 'comptable')
   @Get('facture/:id/html')
   async getFactureHtml(@Param('id') id: string, @Res() res: Response) {
     const payload = await this.buildFacturePayload(id);

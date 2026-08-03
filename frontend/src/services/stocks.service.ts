@@ -10,6 +10,7 @@ export interface Stock {
   date: string;
   fournisseur: string;
   created_at: string;
+  creator?: { id: string; nom: string; prenom: string };
 }
 
 export interface CreateStockPayload {

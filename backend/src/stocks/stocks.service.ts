@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
 import { MouvementStock } from './mouvement-stock.entity.js';
+import { User } from '../auth/user.entity.js';
 import { CreateMouvementDto } from './dto/create-mouvement.dto.js';
 
 @Injectable()
@@ -13,6 +14,13 @@ export class StocksService {
   async findByCycle(cycleId: string) {
     return this.mouvementModel.findAll({
       where: { cycle_id: cycleId },
+      include: [
+        {
+          model: User,
+          as: 'creator',
+          attributes: ['id', 'nom', 'prenom'],
+        },
+      ],
       order: [['date', 'DESC']],
     });
   }

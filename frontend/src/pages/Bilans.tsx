@@ -25,12 +25,11 @@ import {
   Spinner,
   Center,
 } from '@chakra-ui/react';
-import { FiLock, FiChevronDown } from 'react-icons/fi';
+import { FiChevronDown } from 'react-icons/fi';
 import { cyclesService, Cycle } from '../services/cycles.service';
 import { depensesService, Depense } from '../services/depenses.service';
 import { ventesService, Vente } from '../services/ventes.service';
 import { santeService, Mortalite } from '../services/sante.service';
-import ConfirmModal from '../components/ConfirmModal';
 
 const CATEGORIE_LABELS: Record<string, string> = {
   poussins: 'Poussins',
@@ -61,8 +60,6 @@ export default function Bilans() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
-  const [cloturing, setCloturing] = useState(false);
-  const [showClotureConfirm, setShowClotureConfirm] = useState(false);
 
   useEffect(() => {
     cyclesService.getAll()
@@ -97,26 +94,6 @@ export default function Bilans() {
   }, [selectedCycle]);
 
   useEffect(() => { loadData(); }, [loadData]);
-
-  const handleCloture = async () => {
-    if (!selectedCycle) return;
-    setCloturing(true);
-    setError('');
-    try {
-      await cyclesService.cloture(selectedCycle);
-      showSuccess('Cycle clôturé avec succès');
-      const updatedCycles = await cyclesService.getAll();
-      setCycles(updatedCycles);
-      const updated = updatedCycles.find((c: Cycle) => c.id === selectedCycle);
-      setSelectedCycleData(updated || null);
-      setShowClotureConfirm(false);
-      await loadData();
-    } catch {
-      setError('Erreur lors de la clôture du cycle');
-    } finally {
-      setCloturing(false);
-    }
-  };
 
   const showSuccess = (msg: string) => {
     setSuccess(msg);
@@ -201,19 +178,6 @@ export default function Bilans() {
             <Badge colorScheme={selectedCycleData.statut === 'cloture' ? 'green' : 'orange'} fontSize="sm" px={3} py={1}>
               {selectedCycleData.statut === 'cloture' ? 'Clôturé' : 'En cours'}
             </Badge>
-            {selectedCycleData.statut === 'en_cours' && (
-              <Button
-                leftIcon={<FiLock />}
-                bg="orange.400"
-                color="white"
-                _hover={{ bg: 'orange.500' }}
-                fontWeight="bold"
-                size="sm"
-                onClick={() => setShowClotureConfirm(true)}
-              >
-                Clôturer le cycle
-              </Button>
-            )}
           </HStack>
 
           <SimpleGrid columns={{ base: 1, md: 4 }} spacing={4}>
@@ -323,7 +287,7 @@ export default function Bilans() {
                       <Td color="text.2">{new Date(v.date).toLocaleDateString('fr-FR')}</Td>
                       <Td color="text.2">{v.quantite}</Td>
                       <Td color="text.2">{Number(v.prix_unitaire).toLocaleString('fr-FR')} KMF</Td>
-                      <Td color="text.2" fontWeight="bold">{(Number(v.quantite) * Number(v.prix_unitaire)).toLocaleString('fr-FR')} KMF</Td>
+                      <Td color="text.2" fontWeight="bold">{(Number(v.quantite) * Number(v.prix_unitaire) - Number(v.remise || 0)).toLocaleString('fr-FR')} KMF</Td>
                       <Td>
                         <Badge fontSize="xs" colorScheme={v.statut_paiement === 'paye' ? 'green' : v.statut_paiement === 'partiel' ? 'orange' : 'red'}>
                           {v.statut_paiement === 'paye' ? 'Payé' : v.statut_paiement === 'partiel' ? 'Partiel' : 'Impayé'}
@@ -337,16 +301,6 @@ export default function Bilans() {
           )}
         </>
       )}
-
-      <ConfirmModal
-        isOpen={showClotureConfirm}
-        onClose={() => setShowClotureConfirm(false)}
-        onConfirm={handleCloture}
-        title="Clôturer le cycle"
-        message="Êtes-vous sûr de vouloir clôturer ce cycle ? Cette action est irréversible et le bilan sera calculé automatiquement."
-        confirmLabel="Clôturer"
-        isLoading={cloturing}
-      />
     </VStack>
   );
 }

@@ -42,6 +42,7 @@ import { clientsService, Client, ClientVente } from '../services/clients.service
 import { cyclesService, Cycle } from '../services/cycles.service';
 import { ventesService, CreateVentePayload, CategorieProduit } from '../services/ventes.service';
 import { santeService, Mortalite } from '../services/sante.service';
+import { useAuth } from '../contexts/AuthContext';
 
 const TYPE_LABELS: Record<string, string> = {
   menage: 'Ménage',
@@ -74,6 +75,7 @@ const MODE_PAIEMENT_LABELS: Record<string, string> = {
 export default function ClientDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { user } = useAuth();
 
   const [client, setClient] = useState<Client | null>(null);
   const [ventes, setVentes] = useState<ClientVente[]>([]);
@@ -176,11 +178,11 @@ export default function ClientDetail() {
 
   const totalMontant = ventes
     .filter((v) => v.statut_paiement !== 'impaye')
-    .reduce((sum, v) => sum + Number(v.quantite) * Number(v.prix_unitaire), 0);
+    .reduce((sum, v) => sum + Number(v.quantite) * Number(v.prix_unitaire) - Number(v.remise || 0), 0);
 
   const totalImpaye = ventes
     .filter((v) => v.statut_paiement === 'impaye')
-    .reduce((sum, v) => sum + Number(v.quantite) * Number(v.prix_unitaire), 0);
+    .reduce((sum, v) => sum + Number(v.quantite) * Number(v.prix_unitaire) - Number(v.remise || 0), 0);
 
   const cyclesUniques = new Set(ventes.map((v) => v.cycle?.id).filter(Boolean)).size;
 
@@ -206,9 +208,9 @@ export default function ClientDetail() {
       const existing = byCycle.get(key);
       if (existing) {
         existing.quantite += Number(v.quantite);
-        existing.montant += Number(v.quantite) * Number(v.prix_unitaire);
+        existing.montant += Number(v.quantite) * Number(v.prix_unitaire) - Number(v.remise || 0);
       } else {
-        byCycle.set(key, { cycle: label, quantite: Number(v.quantite), montant: Number(v.quantite) * Number(v.prix_unitaire), numero });
+        byCycle.set(key, { cycle: label, quantite: Number(v.quantite), montant: Number(v.quantite) * Number(v.prix_unitaire) - Number(v.remise || 0), numero });
       }
     }
     return Array.from(byCycle.values()).sort((a, b) => a.numero - b.numero);
@@ -287,29 +289,33 @@ export default function ClientDetail() {
           >
             {TYPE_LABELS[client.type_client] || client.type_client}
           </Box>
-          <Tooltip label="Aperçu facture">
-            <IconButton
-              aria-label="Aperçu facture"
-              icon={<FiEye />}
-              size="xs"
-              variant="ghost"
-              color="blue.300"
-              onClick={handlePreviewFactureGroupee}
-              isDisabled={!dernierCycleAvecVentes}
-            />
-          </Tooltip>
-          <Tooltip label="Générer facture">
-            <IconButton
-              aria-label="Générer facture"
-              icon={<FiDownload />}
-              size="xs"
-              variant="ghost"
-              color="blue.400"
-              onClick={handleDownloadFactureGroupee}
-              isLoading={pdfLoading}
-              isDisabled={!dernierCycleAvecVentes}
-            />
-          </Tooltip>
+          {user?.role !== 'employe' && (
+            <>
+              <Tooltip label="Aperçu facture">
+                <IconButton
+                  aria-label="Aperçu facture"
+                  icon={<FiEye />}
+                  size="xs"
+                  variant="ghost"
+                  color="blue.300"
+                  onClick={handlePreviewFactureGroupee}
+                  isDisabled={!dernierCycleAvecVentes}
+                />
+              </Tooltip>
+              <Tooltip label="Générer facture">
+                <IconButton
+                  aria-label="Générer facture"
+                  icon={<FiDownload />}
+                  size="xs"
+                  variant="ghost"
+                  color="blue.400"
+                  onClick={handleDownloadFactureGroupee}
+                  isLoading={pdfLoading}
+                  isDisabled={!dernierCycleAvecVentes}
+                />
+              </Tooltip>
+            </>
+          )}
         </HStack>
         <Button
           size="sm"
@@ -442,7 +448,7 @@ export default function ClientDetail() {
                       <Td color="text.2">{v.quantite}</Td>
                       <Td color="text.2">{Number(v.prix_unitaire).toLocaleString('fr-FR')} KMF</Td>
                       <Td color="text.2">
-                        {(Number(v.quantite) * Number(v.prix_unitaire)).toLocaleString('fr-FR')} KMF
+                        {(Number(v.quantite) * Number(v.prix_unitaire) - Number(v.remise || 0)).toLocaleString('fr-FR')} KMF
                       </Td>
                       <Td>
                         <Badge bg={STATUT_COLORS[v.statut_paiement] || 'surface.3'} color="white" fontSize="xs">
@@ -525,11 +531,17 @@ export default function ClientDetail() {
                     {MODE_PAIEMENT_LABELS[venteForm.mode_paiement] || venteForm.mode_paiement}
                   </MenuButton>
                   <MenuList bg="surface.1" borderColor="border.1">
-                    <MenuItem bg="surface.1" _hover={{ bg: 'surface.2' }} color="text.1" fontSize={{ base: "md", md: "sm" }} onClick={() => setVenteForm({ ...venteForm, mode_paiement: 'especes' })}>Espèces</MenuItem>
-                    <MenuItem bg="surface.1" _hover={{ bg: 'surface.2' }} color="text.1" fontSize={{ base: "md", md: "sm" }} onClick={() => setVenteForm({ ...venteForm, mode_paiement: 'mobile_money' })}>Mobile Money</MenuItem>
-                    <MenuItem bg="surface.1" _hover={{ bg: 'surface.2' }} color="text.1" fontSize={{ base: "md", md: "sm" }} onClick={() => setVenteForm({ ...venteForm, mode_paiement: 'cheque' })}>Chèque</MenuItem>
-                    <MenuItem bg="surface.1" _hover={{ bg: 'surface.2' }} color="text.1" fontSize={{ base: "md", md: "sm" }} onClick={() => setVenteForm({ ...venteForm, mode_paiement: 'virement' })}>Virement</MenuItem>
-                    <MenuItem bg="surface.1" _hover={{ bg: 'surface.2' }} color="text.1" fontSize={{ base: "md", md: "sm" }} onClick={() => setVenteForm({ ...venteForm, mode_paiement: 'credit' })}>Crédit</MenuItem>
+                    {[
+                      ['especes', 'Espèces'],
+                      ['mobile_money', 'Mobile Money'],
+                      ['cheque', 'Chèque'],
+                      ['virement', 'Virement'],
+                      ['credit', 'Crédit'],
+                    ]
+                      .filter(([value]) => user?.role !== 'employe' || value === 'especes')
+                      .map(([value, label]) => (
+                        <MenuItem key={value} bg="surface.1" _hover={{ bg: 'surface.2' }} color="text.1" fontSize={{ base: "md", md: "sm" }} onClick={() => setVenteForm({ ...venteForm, mode_paiement: value as CreateVentePayload['mode_paiement'] })}>{label}</MenuItem>
+                      ))}
                   </MenuList>
                 </Menu>
                 <Menu>
@@ -549,9 +561,15 @@ export default function ClientDetail() {
                     {STATUT_PAIEMENT_LABELS[venteForm.statut_paiement] || venteForm.statut_paiement}
                   </MenuButton>
                   <MenuList bg="surface.1" borderColor="border.1">
-                    <MenuItem bg="surface.1" _hover={{ bg: 'surface.2' }} color="text.1" fontSize={{ base: "md", md: "sm" }} onClick={() => setVenteForm({ ...venteForm, statut_paiement: 'paye' })}>Payé</MenuItem>
-                    <MenuItem bg="surface.1" _hover={{ bg: 'surface.2' }} color="text.1" fontSize={{ base: "md", md: "sm" }} onClick={() => setVenteForm({ ...venteForm, statut_paiement: 'partiel' })}>Partiel</MenuItem>
-                    <MenuItem bg="surface.1" _hover={{ bg: 'surface.2' }} color="text.1" fontSize={{ base: "md", md: "sm" }} onClick={() => setVenteForm({ ...venteForm, statut_paiement: 'impaye' })}>Impayé</MenuItem>
+                    {[
+                      ['paye', 'Payé'],
+                      ['partiel', 'Partiel'],
+                      ['impaye', 'Impayé'],
+                    ]
+                      .filter(([value]) => user?.role !== 'employe' || value === 'paye')
+                      .map(([value, label]) => (
+                        <MenuItem key={value} bg="surface.1" _hover={{ bg: 'surface.2' }} color="text.1" fontSize={{ base: "md", md: "sm" }} onClick={() => setVenteForm({ ...venteForm, statut_paiement: value as CreateVentePayload['statut_paiement'] })}>{label}</MenuItem>
+                      ))}
                   </MenuList>
                 </Menu>
               </SimpleGrid>

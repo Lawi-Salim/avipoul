@@ -7,6 +7,7 @@ export interface Mortalite {
   nombre: number;
   cause: string;
   created_at: string;
+  creator?: { id: string; nom: string; prenom: string };
 }
 
 export interface CreateMortalitePayload {

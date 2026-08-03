@@ -4,9 +4,12 @@ import {
   Model,
   PrimaryKey,
   DataType,
+  BelongsTo,
+  ForeignKey,
   CreatedAt,
   UpdatedAt,
 } from 'sequelize-typescript';
+import { User } from '../auth/user.entity.js';
 
 @Table({ tableName: 'risques', timestamps: true })
 export class Risque extends Model {
@@ -28,6 +31,13 @@ export class Risque extends Model {
 
   @Column({ type: DataType.BOOLEAN, allowNull: false, defaultValue: true })
   declare actif: boolean;
+
+  @ForeignKey(() => User)
+  @Column({ type: DataType.UUID, allowNull: true, onDelete: 'SET NULL' })
+  declare created_by: string | null;
+
+  @BelongsTo(() => User)
+  creator!: User;
 
   @CreatedAt
   @Column({ type: DataType.DATE, allowNull: false })

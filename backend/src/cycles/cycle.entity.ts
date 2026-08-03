@@ -46,6 +46,9 @@ export class Cycle extends Model {
   @Column({ type: DataType.TEXT, allowNull: false, defaultValue: 'en_cours' })
   declare statut: string;
 
+  @Column({ type: DataType.DATE, allowNull: true })
+  declare phase_changed_at: Date | null;
+
   @Column({ type: DataType.DATEONLY, allowNull: true })
   declare date_cloture: string | null;
 

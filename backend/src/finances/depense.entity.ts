@@ -8,6 +8,7 @@ import {
   ForeignKey,
 } from 'sequelize-typescript';
 import { Cycle } from '../cycles/cycle.entity.js';
+import { User } from '../auth/user.entity.js';
 
 @Table({ tableName: 'depenses', timestamps: false })
 export class Depense extends Model {
@@ -34,6 +35,13 @@ export class Depense extends Model {
   @Column({ type: DataType.TEXT, allowNull: true })
   declare description: string | null;
 
+  @ForeignKey(() => User)
+  @Column({ type: DataType.UUID, allowNull: true, onDelete: 'SET NULL' })
+  declare created_by: string | null;
+
   @BelongsTo(() => Cycle)
   cycle!: Cycle;
+
+  @BelongsTo(() => User)
+  creator!: User;
 }

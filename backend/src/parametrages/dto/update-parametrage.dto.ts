@@ -29,4 +29,34 @@ export class UpdateParametrageDto {
   @IsInt()
   @Min(1)
   seuil_stock_bas_jours?: number;
+
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  duree_phase_preparation?: number;
+
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  duree_phase_demarrage?: number;
+
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  duree_phase_croissance?: number;
+
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  duree_phase_finition?: number;
+
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  duree_phase_commercialisation?: number;
+
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  duree_phase_nettoyage?: number;
 }

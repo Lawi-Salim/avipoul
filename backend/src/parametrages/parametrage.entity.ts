@@ -41,6 +41,24 @@ export class Parametrage extends Model {
   @Column({ type: DataType.INTEGER, allowNull: false, defaultValue: 3 })
   declare seuil_stock_bas_jours: number;
 
+  @Column({ type: DataType.INTEGER, allowNull: false, defaultValue: 2 })
+  declare duree_phase_preparation: number;
+
+  @Column({ type: DataType.INTEGER, allowNull: false, defaultValue: 7 })
+  declare duree_phase_demarrage: number;
+
+  @Column({ type: DataType.INTEGER, allowNull: false, defaultValue: 21 })
+  declare duree_phase_croissance: number;
+
+  @Column({ type: DataType.INTEGER, allowNull: false, defaultValue: 7 })
+  declare duree_phase_finition: number;
+
+  @Column({ type: DataType.INTEGER, allowNull: false, defaultValue: 7 })
+  declare duree_phase_commercialisation: number;
+
+  @Column({ type: DataType.INTEGER, allowNull: false, defaultValue: 2 })
+  declare duree_phase_nettoyage: number;
+
   @Column({ type: DataType.BOOLEAN, allowNull: false, defaultValue: true })
   declare actif: boolean;
 

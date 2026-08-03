@@ -23,6 +23,7 @@ export interface ClientVente {
   client_id: string | null;
   quantite: number;
   prix_unitaire: number;
+  remise: number;
   date: string;
   mode_paiement: string;
   statut_paiement: string;

@@ -9,6 +9,7 @@ export interface Risque {
   actif: boolean;
   created_at: string;
   updated_at: string;
+  creator?: { id: string; nom: string; prenom: string };
 }
 
 export interface CreateRisquePayload {

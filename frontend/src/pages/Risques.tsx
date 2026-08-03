@@ -38,6 +38,8 @@ import {
 } from '@chakra-ui/react';
 import { FiPlus, FiEdit2, FiTrash2, FiChevronDown } from 'react-icons/fi';
 import { risquesService, Risque, CreateRisquePayload } from '../services/risques.service';
+import { creatorLabel } from '../utils/creatorLabel';
+import { useAuth } from '../contexts/AuthContext';
 import ConfirmModal from '../components/ConfirmModal';
 import { responsiveText } from '../theme/designTokens';
 
@@ -56,6 +58,8 @@ const CATEGORY_COLORS: Record<string, string> = {
 };
 
 export default function Risques() {
+  const { user } = useAuth();
+  const canManage = user?.role !== 'employe';
   const [risques, setRisques] = useState<Risque[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -224,7 +228,8 @@ export default function Risques() {
                 <Th color="text.3" minW={{ base: "150px", md: "auto" }}>Mesure préventive</Th>
                 <Th color="text.3" minW={{ base: "120px", md: "auto" }}>Seuil alerte</Th>
                 <Th color="text.3" minW={{ base: "80px", md: "auto" }}>Actif</Th>
-                <Th color="text.3">Actions</Th>
+                <Th color="text.3">Enregistré par</Th>
+                {canManage && <Th color="text.3">Actions</Th>}
               </Tr>
             </Thead>
             <Tbody>
@@ -239,13 +244,21 @@ export default function Risques() {
                   <Td color="text.2" maxW="250px" minW={{ base: "150px", md: "auto" }}>{risque.mesure_preventive || '-'}</Td>
                   <Td color="text.2" minW={{ base: "120px", md: "auto" }}>{risque.seuil_alerte || '-'}</Td>
                   <Td minW={{ base: "80px", md: "auto" }}>
-                    <Switch
-                      size={{ base: "md", md: "sm" }}
-                      isChecked={risque.actif}
-                      onChange={() => toggleActif(risque)}
-                      colorScheme="green"
-                    />
+                    {canManage ? (
+                      <Switch
+                        size={{ base: "md", md: "sm" }}
+                        isChecked={risque.actif}
+                        onChange={() => toggleActif(risque)}
+                        colorScheme="green"
+                      />
+                    ) : (
+                      <Badge bg={risque.actif ? 'success.1' : 'text.3'} color="white" fontSize={responsiveText.xs}>
+                        {risque.actif ? 'Actif' : 'Résolu'}
+                      </Badge>
+                    )}
                   </Td>
+                  <Td color="text.3" fontSize="xs" minW={{ base: "120px", md: "auto" }}>{creatorLabel(risque.creator)}</Td>
+                  {canManage && (
                   <Td>
                     <HStack spacing={1}>
                       <Button size={{ base: "sm", md: "xs" }} variant="ghost" color="accent.1" onClick={() => openEdit(risque)}>
@@ -256,6 +269,7 @@ export default function Risques() {
                       </Button>
                     </HStack>
                   </Td>
+                  )}
                 </Tr>
               ))}
             </Tbody>

@@ -2,6 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
 import { Mortalite } from './mortalite.entity.js';
 import { Cycle } from '../cycles/cycle.entity.js';
+import { User } from '../auth/user.entity.js';
 import { CreateMortaliteDto } from './dto/create-mortalite.dto.js';
 
 @Injectable()
@@ -16,6 +17,13 @@ export class SanteService {
   async findByCycle(cycleId: string) {
     const mortalites = await this.mortaliteModel.findAll({
       where: { cycle_id: cycleId },
+      include: [
+        {
+          model: User,
+          as: 'creator',
+          attributes: ['id', 'nom', 'prenom'],
+        },
+      ],
       order: [['date', 'DESC']],
     });
 

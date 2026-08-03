@@ -42,9 +42,11 @@ import { ventesService, Vente, CreateVentePayload, CATEGORIE_PRODUIT_LABELS, Cat
 import { santeService, Mortalite } from '../services/sante.service';
 import { clientsService, Client } from '../services/clients.service';
 import { exportService } from '../services/export.service';
+import { useAuth } from '../contexts/AuthContext';
 import ConfirmModal from '../components/ConfirmModal';
 import Pagination from '../components/Pagination';
 import { responsiveText } from '../theme/designTokens';
+import { creatorLabel } from '../utils/creatorLabel';
 
 const MODE_PAIEMENT_LABELS: Record<string, string> = {
   especes: 'Espèces',
@@ -71,6 +73,7 @@ const ITEMS_PER_PAGE = 10;
 export default function Ventes() {
   const navigate = useNavigate();
   const { cycleId: urlCycleId } = useParams<{ cycleId?: string }>();
+  const { user } = useAuth();
   const [cycles, setCycles] = useState<Cycle[]>([]);
   const [clients, setClients] = useState<Client[]>([]);
   const [selectedCycle, setSelectedCycle] = useState('');
@@ -485,18 +488,20 @@ export default function Ventes() {
                     {MODE_PAIEMENT_LABELS[form.mode_paiement] || form.mode_paiement}
                   </MenuButton>
                   <MenuList bg="surface.1" borderColor="border.1">
-                    {Object.entries(MODE_PAIEMENT_LABELS).map(([value, label]) => (
-                      <MenuItem
-                        key={value}
-                        bg="surface.1"
-                        _hover={{ bg: 'surface.2' }}
-                        color="text.1"
-                        fontSize={{ base: "md", md: "sm" }}
-                        onClick={() => setForm({ ...form, mode_paiement: value as CreateVentePayload['mode_paiement'] })}
-                      >
-                        {label}
-                      </MenuItem>
-                    ))}
+                    {Object.entries(MODE_PAIEMENT_LABELS)
+                      .filter(([value]) => user?.role !== 'employe' || value === 'especes')
+                      .map(([value, label]) => (
+                        <MenuItem
+                          key={value}
+                          bg="surface.1"
+                          _hover={{ bg: 'surface.2' }}
+                          color="text.1"
+                          fontSize={{ base: "md", md: "sm" }}
+                          onClick={() => setForm({ ...form, mode_paiement: value as CreateVentePayload['mode_paiement'] })}
+                        >
+                          {label}
+                        </MenuItem>
+                      ))}
                   </MenuList>
                 </Menu>
                 <Menu>
@@ -516,18 +521,20 @@ export default function Ventes() {
                     {STATUT_PAIEMENT_LABELS[form.statut_paiement] || form.statut_paiement}
                   </MenuButton>
                   <MenuList bg="surface.1" borderColor="border.1">
-                    {Object.entries(STATUT_PAIEMENT_LABELS).map(([value, label]) => (
-                      <MenuItem
-                        key={value}
-                        bg="surface.1"
-                        _hover={{ bg: 'surface.2' }}
-                        color="text.1"
-                        fontSize={{ base: "md", md: "sm" }}
-                        onClick={() => setForm({ ...form, statut_paiement: value as CreateVentePayload['statut_paiement'] })}
-                      >
-                        {label}
-                      </MenuItem>
-                    ))}
+                    {Object.entries(STATUT_PAIEMENT_LABELS)
+                      .filter(([value]) => user?.role !== 'employe' || value === 'paye')
+                      .map(([value, label]) => (
+                        <MenuItem
+                          key={value}
+                          bg="surface.1"
+                          _hover={{ bg: 'surface.2' }}
+                          color="text.1"
+                          fontSize={{ base: "md", md: "sm" }}
+                          onClick={() => setForm({ ...form, statut_paiement: value as CreateVentePayload['statut_paiement'] })}
+                        >
+                          {label}
+                        </MenuItem>
+                      ))}
                   </MenuList>
                 </Menu>
                 <Menu>
@@ -544,7 +551,17 @@ export default function Ventes() {
                     textAlign="left"
                     justifyContent="space-between"
                   >
-                    {form.client_id ? clients.find(cl => cl.id === form.client_id)?.nom || 'Client inconnu' : 'Choisir un client'}
+                    <Text
+                      as="span"
+                      noOfLines={1}
+                      flex={1}
+                      minW={0}
+                      overflow="hidden"
+                      textOverflow="ellipsis"
+                      whiteSpace="nowrap"
+                    >
+                      {form.client_id ? clients.find(cl => cl.id === form.client_id)?.nom || 'Client inconnu' : 'Choisir un client'}
+                    </Text>
                   </MenuButton>
                   <MenuList bg="surface.1" borderColor="border.1">
                     <MenuItem
@@ -719,7 +736,8 @@ export default function Ventes() {
                 <Th color="text.3">Total</Th>
                 <Th color="text.3">Mode paiement</Th>
                 <Th color="text.3">Statut</Th>
-                <Th color="text.3">Actions</Th>
+                <Th color="text.3">Enregistré par</Th>
+                {user?.role !== 'employe' && <Th color="text.3">Actions</Th>}
               </Tr>
             </Thead>
             <Tbody>
@@ -762,7 +780,9 @@ export default function Ventes() {
                       {STATUT_PAIEMENT_LABELS[v.statut_paiement] || v.statut_paiement}
                     </Badge>
                   </Td>
+                  <Td color="text.3" fontSize="xs">{creatorLabel(v.creator)}</Td>
                   <Td>
+                    {user?.role !== 'employe' && (
                     <HStack spacing={1}>
                       <Tooltip label="Générer facture">
                         <IconButton
@@ -822,6 +842,7 @@ export default function Ventes() {
                         </>
                       )}
                     </HStack>
+                    )}
                   </Td>
                 </Tr>
               ))}

@@ -7,6 +7,7 @@ import {
   Param,
   Post,
   Put,
+  Req,
   UseGuards,
 } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard.js';
@@ -27,8 +28,11 @@ export class FinancesController {
 
   @Roles('admin', 'comptable')
   @Post('depenses')
-  create(@Body() dto: CreateDepenseDto) {
-    return this.financesService.create(dto);
+  create(
+    @Body() dto: CreateDepenseDto,
+    @Req() req: { user: { id: string } },
+  ) {
+    return this.financesService.create(dto, req.user.id);
   }
 
   @Roles('admin', 'comptable')

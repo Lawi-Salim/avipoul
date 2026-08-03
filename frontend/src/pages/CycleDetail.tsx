@@ -40,20 +40,23 @@ import {
   ModalBody,
   ModalCloseButton,
 } from '@chakra-ui/react';
-import { FiArrowLeft, FiPlus, FiTrash2, FiCheck, FiEdit2, FiDownload, FiEye, FiChevronDown } from 'react-icons/fi';
+import { FiArrowLeft, FiPlus, FiTrash2, FiCheck, FiEdit2, FiDownload, FiEye, FiChevronDown, FiArrowRight } from 'react-icons/fi';
 import { cyclesService, Cycle } from '../services/cycles.service';
 import { stocksService, Stock, CreateStockPayload } from '../services/stocks.service';
 import { santeService, Mortalite, CreateMortalitePayload } from '../services/sante.service';
-import { ventesService, FinancesData } from '../services/ventes.service';
+import { FinancesData } from '../services/ventes.service';
+import { useAuth } from '../contexts/AuthContext';
+import { creatorLabel } from '../utils/creatorLabel';
 import ConfirmModal from '../components/ConfirmModal';
+import StepperPhase from '../components/StepperPhase';
 
 const PHASES = [
-  { value: 'preparation', label: 'Préparation' },
-  { value: 'demarrage', label: 'Démarrage' },
-  { value: 'croissance', label: 'Croissance' },
-  { value: 'finition', label: 'Finition' },
-  { value: 'commercialisation', label: 'Commercialisation' },
-  { value: 'nettoyage', label: 'Nettoyage' },
+  { value: 'preparation', label: 'Préparation', abbr: 'Pré' },
+  { value: 'demarrage', label: 'Démarrage', abbr: 'Dém' },
+  { value: 'croissance', label: 'Croissance', abbr: 'Cro' },
+  { value: 'finition', label: 'Finition', abbr: 'Fin' },
+  { value: 'commercialisation', label: 'Commercialisation', abbr: 'Com' },
+  { value: 'nettoyage', label: 'Nettoyage', abbr: 'Net' },
 ];
 
 const TYPE_STOCK_LABELS: Record<string, string> = {
@@ -65,6 +68,7 @@ const TYPE_STOCK_LABELS: Record<string, string> = {
 export default function CycleDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { user } = useAuth();
 
   const [cycle, setCycle] = useState<Cycle | null>(null);
   const [stocks, setStocks] = useState<Stock[]>([]);
@@ -74,11 +78,8 @@ export default function CycleDetail() {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [newPhase, setNewPhase] = useState('');
-  const [cloturing, setCloturing] = useState(false);
   const [deleteStockTargetId, setDeleteStockTargetId] = useState<string | null>(null);
   const [deleteMortTargetId, setDeleteMortTargetId] = useState<string | null>(null);
-  const [showClotureWarning, setShowClotureWarning] = useState(false);
-  const [ventesImpayes, setVentesImpayes] = useState(0);
   const [showEditModal, setShowEditModal] = useState(false);
   const [editForm, setEditForm] = useState({
     date_reception: '',
@@ -141,43 +142,33 @@ export default function CycleDetail() {
     try {
       const updated = await cyclesService.changePhase(id, newPhase);
       setCycle(updated);
+      setNewPhase(updated.phase_courante);
       showSuccess('Phase mise à jour');
     } catch {
       setError('Erreur lors du changement de phase');
     }
   };
 
-  const handleCloture = async () => {
-    if (!id) return;
-    setCloturing(true);
+  const phaseIndex = cycle ? PHASES.findIndex((p) => p.value === cycle.phase_courante) : -1;
+  const nextPhase = phaseIndex >= 0 && phaseIndex < PHASES.length - 1 ? PHASES[phaseIndex + 1] : null;
+  const canManagePhase = user?.role === 'admin' || user?.role === 'comptable';
+
+  const handleNextPhase = async () => {
+    if (!id || !nextPhase) return;
     setError('');
     try {
-      const updated = await cyclesService.cloture(id);
+      const updated = await cyclesService.changePhase(id, nextPhase.value);
       setCycle(updated);
-      showSuccess('Cycle clôturé avec succès');
+      setNewPhase(updated.phase_courante);
+      showSuccess(`Phase passée à « ${nextPhase.label} »`);
     } catch {
-      setError('Erreur lors de la clôture');
-    } finally {
-      setCloturing(false);
+      setError('Erreur lors du changement de phase');
     }
   };
 
-  const checkVentesImpayes = async () => {
+  const handleClotureClick = () => {
     if (!id) return;
-    try {
-      const ventes = await ventesService.getByCycle(id);
-      const impayes = ventes.filter(
-        (v) => v.statut_paiement === 'impaye' || v.statut_paiement === 'partiel'
-      ).length;
-      if (impayes > 0) {
-        setVentesImpayes(impayes);
-        setShowClotureWarning(true);
-      } else {
-        handleCloture();
-      }
-    } catch {
-      setError('Erreur lors de la vérification des ventes');
-    }
+    navigate(`/cycles/${id}/cloture`);
   };
 
   const handleEditClick = () => {
@@ -407,7 +398,7 @@ export default function CycleDetail() {
           )}
         </HStack>
 
-        {cycle.statut === 'en_cours' && (
+        {cycle.statut === 'en_cours' && canManagePhase && (
           <HStack>
             <Menu>
               <MenuButton
@@ -454,21 +445,53 @@ export default function CycleDetail() {
             >
               Appliquer
             </Button>
-            <Button
-              size="sm"
-              bg="danger.1"
-              color="white"
-              _hover={{ opacity: 0.8 }}
-              onClick={checkVentesImpayes}
-              isLoading={cloturing}
-              fontWeight="bold"
-              flexShrink={0}
-            >
-              Clôturer
-            </Button>
+            {nextPhase && (
+              <Button
+                size="sm"
+                bg="accent.1"
+                color="gray.900"
+                _hover={{ bg: 'accent.2' }}
+                leftIcon={<FiArrowRight />}
+                onClick={handleNextPhase}
+                fontWeight="bold"
+                flexShrink={0}
+              >
+                Phase suivante
+              </Button>
+            )}
+            {user?.role === 'admin' && (
+              <Button
+                size="sm"
+                bg="danger.1"
+                color="white"
+                _hover={{ opacity: 0.8 }}
+                onClick={handleClotureClick}
+                fontWeight="bold"
+                flexShrink={0}
+              >
+                Clôturer
+              </Button>
+            )}
           </HStack>
         )}
       </HStack>
+
+      {/* Stepper des phases */}
+      <Card bg="surface.1" borderColor="border.1" borderWidth="1px">
+        <CardBody py={4}>
+          <HStack justify="space-between" mb={3} flexWrap="wrap" gap={2}>
+            <Text fontSize="sm" color="text.3">Phases du cycle</Text>
+            <Badge bg="accent.1" color="gray.900" borderRadius="full" px={2}>
+              {PHASES.find((p) => p.value === cycle.phase_courante)?.label || cycle.phase_courante}
+            </Badge>
+          </HStack>
+          <StepperPhase
+            phases={PHASES}
+            current={cycle.phase_courante}
+            completed={cycle.statut === 'cloture'}
+          />
+        </CardBody>
+      </Card>
 
       {/* Infos du cycle */}
       <SimpleGrid columns={{ base: 2, md: 4 }} spacing={4}>
@@ -667,6 +690,7 @@ export default function CycleDetail() {
                       <Th color="text.3">Quantité</Th>
                       <Th color="text.3">Coût</Th>
                       <Th color="text.3">Fournisseur</Th>
+                      <Th color="text.3">Enregistré par</Th>
                       <Th />
                     </Tr>
                   </Thead>
@@ -683,6 +707,7 @@ export default function CycleDetail() {
                         <Td color="text.2">{Math.round(s.quantite)}</Td>
                         <Td color="text.2">{Math.round(s.cout).toLocaleString('fr-FR')} KMF</Td>
                         <Td color="text.2">{s.fournisseur}</Td>
+                        <Td color="text.3" fontSize="xs">{creatorLabel(s.creator)}</Td>
                         <Td>
                           {cycle.statut === 'en_cours' && (
                             <Tooltip label="Supprimer">
@@ -792,7 +817,7 @@ export default function CycleDetail() {
             </Card>
 
             {mortalites.length === 0 ? (
-              <Text color="text.3" textAlign="center" py={6}>Aucune mortalité enregistrée.</Text>
+              <Text color="text.3" fontSize="sm" textAlign="center" py={6}>Aucune mortalité enregistrée.</Text>
             ) : (
               <Box overflowX="auto">
                 <Table size="sm" variant="simple">
@@ -801,6 +826,7 @@ export default function CycleDetail() {
                       <Th color="text.3">Date</Th>
                       <Th color="text.3">Nombre</Th>
                       <Th color="text.3">Cause</Th>
+                      <Th color="text.3">Enregistré par</Th>
                       <Th />
                     </Tr>
                   </Thead>
@@ -810,6 +836,7 @@ export default function CycleDetail() {
                         <Td color="text.2">{new Date(m.date).toLocaleDateString('fr-FR')}</Td>
                         <Td color="text.2">{m.nombre}</Td>
                         <Td color="text.2">{m.cause}</Td>
+                        <Td color="text.3" fontSize="xs">{creatorLabel(m.creator)}</Td>
                         <Td>
                           {cycle.statut === 'en_cours' && (
                             <Tooltip label="Supprimer">
@@ -907,26 +934,6 @@ export default function CycleDetail() {
         title="Supprimer la mortalité"
         message="Êtes-vous sûr de vouloir supprimer cet enregistrement de mortalité ? Cette action est irréversible."
       />
-      <Modal isOpen={showClotureWarning} onClose={() => setShowClotureWarning(false)} isCentered>
-        <ModalOverlay />
-        <ModalContent mx={{ base: 4, md: 0 }}>
-          <ModalHeader color="text.1">Impossible de clôturer le cycle</ModalHeader>
-          <ModalCloseButton />
-          <ModalBody>
-            <Text fontSize="sm">
-              Ce cycle ne peut pas être clôturé car il y a {ventesImpayes} vente{ventesImpayes > 1 ? 's' : ''} impayée{ventesImpayes > 1 ? 's' : ''} ou partiellement payée{ventesImpayes > 1 ? 's' : ''}.
-            </Text>
-            <Text fontSize="sm" mt={2} color="text.3">
-              Veuillez marquer ces ventes comme payées avant de clôturer le cycle.
-            </Text>
-          </ModalBody>
-          <ModalFooter>
-            <Button colorScheme="blue" size="sm" onClick={() => setShowClotureWarning(false)}>
-              Compris
-            </Button>
-          </ModalFooter>
-        </ModalContent>
-      </Modal>
       <Modal isOpen={showEditModal} onClose={() => setShowEditModal(false)} size="md" isCentered>
         <ModalOverlay />
         <ModalContent mx={{ base: 4, md: 0 }}>

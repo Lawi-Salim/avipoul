@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
 import { Vaccination } from './vaccination.entity.js';
+import { User } from '../auth/user.entity.js';
 import { CreateVaccinationDto } from './dto/create-vaccination.dto.js';
 
 @Injectable()
@@ -13,19 +14,34 @@ export class VaccinationsService {
   async findByCycle(cycleId: string) {
     return this.vaccinationModel.findAll({
       where: { cycle_id: cycleId },
+      include: [
+        {
+          model: User,
+          as: 'creator',
+          attributes: ['id', 'nom', 'prenom'],
+        },
+      ],
       order: [['date_prevue', 'ASC']],
     });
   }
 
   async findOne(id: string) {
-    const vaccination = await this.vaccinationModel.findByPk(id);
+    const vaccination = await this.vaccinationModel.findByPk(id, {
+      include: [
+        {
+          model: User,
+          as: 'creator',
+          attributes: ['id', 'nom', 'prenom'],
+        },
+      ],
+    });
     if (!vaccination) {
       throw new NotFoundException(`Vaccination #${id} non trouvée`);
     }
     return vaccination;
   }
 
-  async create(dto: CreateVaccinationDto) {
+  async create(dto: CreateVaccinationDto, userId?: string) {
     return this.vaccinationModel.create({
       cycle_id: dto.cycle_id,
       produit_id: dto.produit_id || null,
@@ -34,6 +50,7 @@ export class VaccinationsService {
       date_realisee: dto.date_realisee || null,
       rappel: dto.rappel ?? false,
       notes: dto.notes || null,
+      created_by: userId || null,
     });
   }
 

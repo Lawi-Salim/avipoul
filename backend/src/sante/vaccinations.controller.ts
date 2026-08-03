@@ -7,6 +7,7 @@ import {
   Param,
   Post,
   Put,
+  Req,
   UseGuards,
 } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard.js';
@@ -32,8 +33,11 @@ export class VaccinationsController {
   }
 
   @Post('vaccinations')
-  create(@Body() dto: CreateVaccinationDto) {
-    return this.vaccinationsService.create(dto);
+  create(
+    @Body() dto: CreateVaccinationDto,
+    @Req() req: { user: { id: string } },
+  ) {
+    return this.vaccinationsService.create(dto, req.user.id);
   }
 
   @Put('vaccinations/:id')

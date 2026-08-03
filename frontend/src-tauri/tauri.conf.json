@@ -1,7 +1,7 @@
 {
   "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
   "productName": "AVIPOUL",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "identifier": "com.avipoul.desktop",
   "build": {
     "frontendDist": "../dist",

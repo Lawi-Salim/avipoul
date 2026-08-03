@@ -5,6 +5,7 @@ import { Vente } from './vente.entity.js';
 import { Cycle } from '../cycles/cycle.entity.js';
 import { Mortalite } from '../sante/mortalite.entity.js';
 import { Client } from '../clients/client.entity.js';
+import { User } from '../auth/user.entity.js';
 import { RemisesService } from '../remises/remises.service.js';
 import { CreateVenteDto } from './dto/create-vente.dto.js';
 
@@ -31,6 +32,11 @@ export class VentesService {
           model: this.clientModel,
           attributes: ['id', 'nom', 'type_client'],
         },
+        {
+          model: User,
+          as: 'creator',
+          attributes: ['id', 'nom', 'prenom'],
+        },
       ],
       order: [['date', 'DESC']],
     });
@@ -43,6 +49,11 @@ export class VentesService {
           model: this.clientModel,
           attributes: ['id', 'nom', 'type_client'],
         },
+        {
+          model: User,
+          as: 'creator',
+          attributes: ['id', 'nom', 'prenom'],
+        },
       ],
     });
   }
@@ -53,6 +64,11 @@ export class VentesService {
         {
           model: this.clientModel,
           attributes: ['id', 'nom', 'type_client'],
+        },
+        {
+          model: User,
+          as: 'creator',
+          attributes: ['id', 'nom', 'prenom'],
         },
       ],
       order: [['date', 'DESC']],
@@ -103,9 +119,9 @@ export class VentesService {
     return { effectifVivant, totalDejaVendu, resteDisponible: effectifVivant - totalDejaVendu };
   }
 
-  async create(dto: CreateVenteDto) {
+  async create(dto: CreateVenteDto, userId?: string) {
     if (!dto.client_id) {
-      throw new BadRequestException('Un client est obligatoire pour créer une vente');
+      throw new BadRequestException('Un client est obligatoire pour crǸer une vente');
     }
 
     const disponible = await this.calculerDisponibleVente(dto.cycle_id);
@@ -139,6 +155,7 @@ export class VentesService {
       statut_paiement: dto.statut_paiement,
       categorie_produit: dto.categorie_produit || 'poulet_vif',
       remise: dto.remise ?? remiseMontant,
+      created_by: userId || null,
     });
   }
 

@@ -34,6 +34,7 @@ import { santeService, Mortalite, CreateMortalitePayload } from '../services/san
 import { vaccinationsService, Vaccination, CreateVaccinationPayload } from '../services/vaccinations.service';
 import ConfirmModal from '../components/ConfirmModal';
 import { responsiveText } from '../theme/designTokens';
+import { creatorLabel } from '../utils/creatorLabel';
 
 export default function Sante() {
   const [cycles, setCycles] = useState<Cycle[]>([]);
@@ -267,7 +268,7 @@ export default function Sante() {
           </Card>
         )}
         {mortalites.length === 0 ? (
-          <Text color="text.3" fontSize={{ base: "sm", md: "ms" }} textAlign="center" py={4}>Aucune mortalité enregistrée.</Text>
+          <Text color="text.3" fontSize="sm" textAlign="center" py={4}>Aucune mortalité enregistrée.</Text>
         ) : (
           <Box overflowX="auto">
             <Table size="sm" variant="simple">
@@ -276,6 +277,7 @@ export default function Sante() {
                   <Th color="text.3">Date</Th>
                   <Th color="text.3">Nombre</Th>
                   <Th color="text.3">Cause</Th>
+                  <Th color="text.3">Enregistré par</Th>
                   <Th />
                 </Tr>
               </Thead>
@@ -285,6 +287,7 @@ export default function Sante() {
                     <Td color="text.2">{new Date(m.date).toLocaleDateString('fr-FR')}</Td>
                     <Td color="text.2" fontWeight="bold">{m.nombre}</Td>
                     <Td color="text.2">{m.cause || '—'}</Td>
+                    <Td color="text.3" fontSize="xs">{creatorLabel(m.creator)}</Td>
                     <Td>
                       {selectedCycleData?.statut === 'en_cours' && (
                         <Tooltip label="Supprimer">

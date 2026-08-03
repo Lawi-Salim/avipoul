@@ -1,0 +1,50 @@
+# Déploiement automatique du backend sur Datasas (self-hosted runner)
+#
+# IMPORTANT : ce workflow tourne SUR le serveur Datasas (réseau local).
+# Un runner GitHub classique (cloud) ne peut PAS joindre 192.168.1.15.
+#
+# Prérequis (une seule fois) — voir GUIDE-RUNNER-GITHUB.md :
+#   1. Installer et enregistrer le GitHub Actions runner sur Datasas
+#      avec le label `datasas` (utilisateur lawi)
+#   2. Autoriser lawi à faire sudo sans mot de passe pour
+#      rsync, systemctl et psql (fichier sudoers)
+#
+# Déclencheur : push sur la branche `avipoul` touchant backend/** (ou manuel).
+
+name: Deploy backend (Datasas)
+
+on:
+  push:
+    branches:
+      - avipoul
+    paths:
+      - 'backend/**'
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: [self-hosted, datasas]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Synchroniser backend -> /opt/avipoul/backend
+        run: |
+          sudo rsync -a --delete \
+            --exclude 'node_modules' \
+            --exclude '.env' \
+            "${{ github.workspace }}/backend/" /opt/avipoul/backend/
+
+      - name: Installer les dépendances
+        working-directory: /opt/avipoul/backend
+        run: yarn install --production
+
+      - name: Migrations de base de données
+        run: |
+          sudo -u postgres psql -d avipoul -f /opt/avipoul/backend/migrations/2026-07-31_add_created_by_traceability.sql || true
+          sudo -u postgres psql -d avipoul -f /opt/avipoul/backend/migrations/2026-07-31_add_validation_workflow.sql || true
+          sudo -u postgres psql -d avipoul -f /opt/avipoul/backend/migrations/2026-08-01_add_phase_durations_and_notifications.sql || true
+          sudo -u postgres psql -d avipoul -c "CREATE EXTENSION IF NOT EXISTS unaccent;" || true
+
+      - name: Redémarrer le service backend
+        run: sudo systemctl restart avipoul-backend

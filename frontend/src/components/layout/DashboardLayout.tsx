@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import {
   Box,
   Flex,
@@ -6,9 +6,6 @@ import {
   VStack,
   Text,
   Image,
-  Input,
-  InputGroup,
-  InputLeftElement,
   IconButton,
   Badge,
   Tooltip,
@@ -19,6 +16,7 @@ import {
   MenuItem,
   Heading,
   Button,
+  Kbd,
 } from '@chakra-ui/react';
 import {
   FiHome,
@@ -39,21 +37,25 @@ import {
   FiLogOut,
   FiAlertTriangle,
   FiMenu,
+  FiCheckCircle,
 } from 'react-icons/fi';
 import { MdOutlineCalculate } from "react-icons/md";
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useThemeMode } from '../../theme/ThemeMode';
 import { useAuth } from '../../contexts/AuthContext';
 import { DrawerCalculate } from '../../utils/DrawerCalculate';
+import { DrawerNotifications } from '../../utils/DrawerNotifications';
 import { UserAvatar } from '../../utils/Avatars';
 import logoDark from '../../assets/img/logo-png-3x.png';
 import logoLight from '../../assets/img/logo-png--3x.png';
 import logo from '../../assets/img/logo.png';
 import { cyclesService } from '../../services/cycles.service';
 import { ventesService } from '../../services/ventes.service';
+import { notificationsService, AppNotification } from '../../services/notifications.service';
 import SidebarMobile from './SidebarMobile';
 import { responsiveText } from '../../theme/designTokens';
 import ConfirmModal from '../ConfirmModal';
+import { Search } from '../search/Search';
 
 interface NavItemProps {
   icon: React.ReactNode;
@@ -181,6 +183,7 @@ function SidebarNav({ onClose }: { onClose?: () => void }) {
     {
       label: 'RAPPORTS',
       items: [
+        { icon: <FiCheckCircle />, label: 'À valider', path: '/a-valider', roles: ['admin', 'comptable'] },
         { icon: <FiAlertTriangle />, label: 'Risques', path: '/risques', roles: ['admin', 'employe'] },
         { icon: <FiFileText />, label: 'Bilans', path: '/bilans', roles: ['admin', 'comptable'] },
       ],
@@ -301,8 +304,38 @@ function Navbar({ onCalculatorOpen, onMobileMenuOpen, isMobileSidebarOpen }: { o
   const { colorMode, toggleThemeMode } = useThemeMode();
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const [showProfilModal, setShowProfilModal] = useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+  const [showNotifications, setShowNotifications] = useState(false);
+  const [showSearch, setShowSearch] = useState(false);
+  const [notifications, setNotifications] = useState<AppNotification[]>([]);
+
+  const fetchNotifications = useCallback(async () => {
+    try {
+      const data = await notificationsService.getAll();
+      setNotifications(data);
+    } catch {
+      // Ignorer : la cloche reste vide si le service est indisponible.
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchNotifications();
+    const interval = setInterval(fetchNotifications, 60000);
+    return () => clearInterval(interval);
+  }, [fetchNotifications, location.pathname]);
+
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        setShowSearch(true);
+      }
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, []);
 
   return (
     <Flex
@@ -327,21 +360,27 @@ function Navbar({ onCalculatorOpen, onMobileMenuOpen, isMobileSidebarOpen }: { o
           size="sm"
           color="text.2"
         />
-        <InputGroup display={{ base: 'none', lg: 'flex' }} maxW="400px" size="sm">
-          <InputLeftElement pointerEvents="none">
-            <FiSearch color="gray.500" />
-          </InputLeftElement>
-          <Input
-            placeholder="Rechercher..."
-            fontSize="sm"
-            bg="surface.2"
-            border="1px solid"
-            borderColor="border.1"
-            borderRadius="lg"
-            _placeholder={{ color: 'gray.500' }}
-            _focus={{ bg: 'surface.3', boxShadow: 'none' }}
-          />
-        </InputGroup>
+        <Button
+          display={{ base: 'none', lg: 'flex' }}
+          size="sm"
+          variant="ghost"
+          justifyContent="space-between"
+          w="200px"
+          px={3}
+          bg="surface.2"
+          color="text.3"
+          border="1px solid"
+          borderColor="border.1"
+          borderRadius="lg"
+          _hover={{ bg: 'surface.3', borderColor: 'border.2' }}
+          onClick={() => setShowSearch(true)}
+        >
+          <HStack spacing={2}>
+            <FiSearch size={14} />
+            <Text fontSize="xs">Rechercher...</Text>
+          </HStack>
+          <Kbd fontSize="10px">Ctrl + K</Kbd>
+        </Button>
       </HStack>
 
       {/* Droite : Recherche icône (mobile) + Notifications + Calculatrice (desktop) + Thème + Avatar */}
@@ -353,27 +392,46 @@ function Navbar({ onCalculatorOpen, onMobileMenuOpen, isMobileSidebarOpen }: { o
           variant="ghost"
           size="sm"
           color="text.2"
+          onClick={() => setShowSearch(true)}
         />
         <Tooltip label="Notifications" placement="bottom">
-          <Box position="relative">
+          <Box
+            position="relative"
+            cursor="pointer"
+            p={1}
+            borderRadius="md"
+            _hover={{ bg: 'surface.2' }}
+            onClick={() => setShowNotifications(true)}
+          >
             <IconButton
               aria-label="Notifications"
               icon={<FiBell size={18} />}
               size="sm"
               variant="ghost"
               color="text.2"
+              pointerEvents="none"
             />
-            <Badge
-              position="absolute"
-              top={1}
-              right={1}
-              w={2}
-              h={2}
-              bg="red.400"
-              borderRadius="full"
-              border="2px solid"
-              borderColor="surface.1"
-            />
+            {notifications.length > 0 && (
+              <Badge
+                position="absolute"
+                top={0}
+                right={0}
+                bg="red.400"
+                color="white"
+                borderRadius="full"
+                fontSize="10px"
+                minW="18px"
+                h="18px"
+                px={1}
+                display="flex"
+                alignItems="center"
+                justifyContent="center"
+                border="2px solid"
+                borderColor="surface.1"
+              >
+                {notifications.length}
+              </Badge>
+            )}
           </Box>
         </Tooltip>
         <Tooltip label="Calculatrice" placement="bottom">
@@ -555,6 +613,18 @@ function Navbar({ onCalculatorOpen, onMobileMenuOpen, isMobileSidebarOpen }: { o
         title="Déconnexion"
         message="Voulez-vous vraiment vous déconnecter ?"
         confirmLabel="Déconnexion"
+      />
+
+      <DrawerNotifications
+        isOpen={showNotifications}
+        onClose={() => setShowNotifications(false)}
+        notifications={notifications}
+        onRefresh={fetchNotifications}
+      />
+
+      <Search
+        isOpen={showSearch}
+        onClose={() => setShowSearch(false)}
       />
     </Flex>
   );

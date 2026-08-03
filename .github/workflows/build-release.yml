@@ -53,44 +53,13 @@ jobs:
       - name: Build installer (Tauri)
         run: npm run tauri:build
 
-      - name: Rename setup -> Avipoul_<version>_x64-setup.exe
-        shell: pwsh
-        run: |
-          $ErrorActionPreference = 'Stop'
-          $dir = "src-tauri/target/release/bundle/nsis"
-          $version = (Get-Content "src-tauri/tauri.conf.json" | ConvertFrom-Json).version
-          $target = Get-ChildItem $dir -Filter "*_x64-setup.exe" |
-            Where-Object { $_.Name -like "AVIPOUL_${version}_*" } |
-            Select-Object -First 1
-          if ($null -eq $target) { throw "Aucun setup 'AVIPOUL_${version}_*_x64-setup.exe' dans $dir" }
-          $new = $target.Name -replace '^AVIPOUL_', 'Avipoul_'
-          if ($new -eq $target.Name) {
-            Write-Host "Nom déjà correct : $($target.Name)"
-          } else {
-            $dest = Join-Path $dir $new
-            if (Test-Path -LiteralPath $dest) { Remove-Item -LiteralPath $dest -Force }
-            $done = $false
-            for ($i = 1; $i -le 5; $i++) {
-              try {
-                Rename-Item -LiteralPath $target.FullName -NewName $new -ErrorAction Stop
-                $done = $true
-                break
-              } catch {
-                if ($i -lt 5) { Start-Sleep -Seconds 2 }
-              }
-            }
-            if (-not $done) { throw "Échec du renommage : $($target.Name) (fichier verrouillé ?)" }
-            Write-Host "Renommé : $($target.Name) -> $new"
-          }
-          Get-ChildItem $dir -Filter "*.exe" | ForEach-Object { Write-Host "NSIS OK : $($_.Name)" }
-
       - name: Publish GitHub Release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: v${{ steps.version.outputs.version }}
-          name: AVIPOUL ${{ steps.version.outputs.version }}
+          name: Avipoul v${{ steps.version.outputs.version }}
           body: |
-            ## AVIPOUL ${{ steps.version.outputs.version }}
+            ## Avipoul v${{ steps.version.outputs.version }}
 
             ### Fonctionnalités
             - **Phases du cycle** : suivi en 6 phases (Broyage, Accouvage, Éclosion, Poussinière, Commercialisation, Nettoyage), durées paramétrables, passage de phase manuel avec blocage, traçabilité (qui, quand)

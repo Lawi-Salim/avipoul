@@ -19,6 +19,13 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Lire la version depuis tauri.conf.json
+        id: version
+        shell: pwsh
+        run: |
+          $version = (Get-Content "src-tauri/tauri.conf.json" | ConvertFrom-Json).version
+          "version=$version" | Out-File -Append -Encoding utf8 $env:GITHUB_OUTPUT
+
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
@@ -80,5 +87,6 @@ jobs:
       - name: Publish GitHub Release
         uses: softprops/action-gh-release@v2
         with:
+          tag_name: v${{ steps.version.outputs.version }}
           files: frontend/src-tauri/target/release/bundle/nsis/*_x64-setup.exe
           generate_release_notes: true

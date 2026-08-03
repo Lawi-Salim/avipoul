@@ -35,7 +35,8 @@ coverage/
 # Misc
 *.sql
 *.sql.gz
-!db/schema-avipoul.sql
+!backend/migrations/*.sql
+!backend/db/schema-avipoul.sql
 !backend/migrations/*.sql
 
 # Backup

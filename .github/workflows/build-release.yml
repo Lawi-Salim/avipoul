@@ -88,5 +88,20 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           tag_name: v${{ steps.version.outputs.version }}
+          name: AVIPOUL ${{ steps.version.outputs.version }}
+          body: |
+            ## AVIPOUL ${{ steps.version.outputs.version }}
+
+            ### Fonctionnalités
+            - **Phases du cycle** : suivi en 6 phases (Broyage, Accouvage, Éclosion, Poussinière, Commercialisation, Nettoyage), durées paramétrables, passage de phase manuel avec blocage, traçabilité (qui, quand)
+            - **Notifications** : cloche dans l'en-tête avec menu déroulant, alertes (phase bloquée, cycle en retard, tâches, alertes sanitaires), actualisation manuelle et automatique (60 s)
+            - **Validations** : workflow de validation des actions sensibles, rejet motivé, auteur (created_by) enregistré
+            - **Recherche** : module multi-critères (cycles, stocks, clients)
+
+            ### CI/CD
+            - Installateur Windows publié automatiquement
+            - Backend déployé automatiquement sur le serveur Datasas (runner self-hosted)
+            - Migrations de base de données exécutées au déploiement
+
+            **Installateur :** `Avipoul_${{ steps.version.outputs.version }}_x64-setup.exe` (joint à cette release)
           files: frontend/src-tauri/target/release/bundle/nsis/*_x64-setup.exe
-          generate_release_notes: true

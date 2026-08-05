@@ -1,6 +1,5 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth } from './contexts/AuthContext';
-import { Spinner, Center } from '@chakra-ui/react';
 import DashboardLayout from './components/layout/DashboardLayout';
 import Login from './pages/Login';
 import Cycles from './pages/Cycles';
@@ -29,11 +28,7 @@ function ProtectedRoute() {
   const { token, loading } = useAuth();
 
   if (loading) {
-    return (
-      <Center h="100vh">
-        <Spinner size="xl" color="accent.1" />
-      </Center>
-    );
+    return null;
   }
 
   if (!token) return <Navigate to="/login" replace />;
@@ -44,11 +39,7 @@ function AdminRoute() {
   const { user, loading } = useAuth();
 
   if (loading) {
-    return (
-      <Center h="100vh">
-        <Spinner size="xl" color="accent.1" />
-      </Center>
-    );
+    return null;
   }
 
   if (!user || user.role !== 'admin') return <Navigate to="/cycles" replace />;

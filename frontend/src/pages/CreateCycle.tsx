@@ -12,9 +12,8 @@ import {
   Alert,
   AlertIcon,
   HStack,
-  Spinner,
-  Center,
 } from '@chakra-ui/react';
+import PageLoading from '../components/PageLoading';
 import { FiArrowLeft } from 'react-icons/fi';
 import { cyclesService, Cycle } from '../services/cycles.service';
 import { responsiveText } from '../theme/designTokens';
@@ -56,7 +55,7 @@ export default function CreateCycle() {
   };
 
   if (checking) {
-    return <Center py={20}><Spinner size="xl" color="accent.1" /></Center>;
+    return <PageLoading fillHeight />;
   }
 
   return (

@@ -1,4 +1,5 @@
 import api from './api';
+import { downloadProgress } from './downloadProgress';
 
 export type CategorieProduit = 'poulet_vif' | 'poulet_abattu' | 'poulet_entier' | 'poulet_fermier' | 'poulet_morceaux' | 'poulet_cuisse' | 'poulet_ailes';
 
@@ -68,14 +69,20 @@ export const ventesService = {
   remove: (id: string) =>
     api.delete(`/ventes/${id}`).then((r) => r.data),
 
-  exportFacturePdf: (venteId: string) =>
-    api.get(`/rapports/facture/${venteId}/pdf`, { responseType: 'blob' }),
+  exportFacturePdf: (venteId: string, onProgress?: (percent: number) => void) =>
+    api.get(`/rapports/facture/${venteId}/pdf`, {
+      responseType: 'blob',
+      onDownloadProgress: downloadProgress(onProgress),
+    }),
 
   exportFactureHtml: (venteId: string) =>
     api.get(`/rapports/facture/${venteId}/html`, { responseType: 'text' }),
 
-  exportFactureGroupeePdf: (clientId: string, cycleId: string) =>
-    api.get(`/rapports/facture-groupee/${clientId}/${cycleId}/pdf`, { responseType: 'blob' }),
+  exportFactureGroupeePdf: (clientId: string, cycleId: string, onProgress?: (percent: number) => void) =>
+    api.get(`/rapports/facture-groupee/${clientId}/${cycleId}/pdf`, {
+      responseType: 'blob',
+      onDownloadProgress: downloadProgress(onProgress),
+    }),
 
   exportFactureGroupeeHtml: (clientId: string, cycleId: string) =>
     api.get(`/rapports/facture-groupee/${clientId}/${cycleId}/html`, { responseType: 'text' }),

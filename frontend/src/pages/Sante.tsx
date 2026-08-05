@@ -28,6 +28,7 @@ import {
   Badge,
   Divider,
 } from '@chakra-ui/react';
+import PageLoading from '../components/PageLoading';
 import { FiPlus, FiTrash2, FiCheck, FiChevronDown } from 'react-icons/fi';
 import { cyclesService, Cycle } from '../services/cycles.service';
 import { santeService, Mortalite, CreateMortalitePayload } from '../services/sante.service';
@@ -171,7 +172,7 @@ export default function Sante() {
   const tauxMortalite = effectifInitial > 0 ? ((totalMortalite / effectifInitial) * 100).toFixed(1) : '0';
 
   if (loading) {
-    return <Box display="flex" justifyContent="center" py={20}><Text color="text.3">Chargement...</Text></Box>;
+    return <PageLoading fillHeight />;
   }
 
   return (

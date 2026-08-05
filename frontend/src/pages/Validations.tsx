@@ -18,11 +18,10 @@ import {
   Th,
   Td,
   Badge,
-  Spinner,
-  Center,
   Icon,
   useDisclosure,
 } from '@chakra-ui/react';
+import PageLoading from '../components/PageLoading';
 import { FiCheckCircle, FiXCircle, FiDollarSign, FiCheck } from 'react-icons/fi';
 import {
   validationsService,
@@ -197,7 +196,7 @@ export default function Validations() {
   };
 
   if (loading) {
-    return <Center py={20}><Spinner size="xl" color="accent.1" /></Center>;
+    return <PageLoading fillHeight />;
   }
 
   const ventes = (data?.ventes || []).filter((v) => !ignored.ventes.includes(v.id));

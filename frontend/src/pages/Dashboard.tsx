@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback, useMemo } from 'react';
-import { downloadFile } from '../utils/downloadFile';
+import { useDownload } from '../contexts/DownloadContext';
 import { useNavigate } from 'react-router-dom';
 import {
   Box,
@@ -12,7 +12,6 @@ import {
   MenuList,
   MenuItem,
   SimpleGrid,
-  Spinner,
   Table,
   Thead,
   Tbody,
@@ -27,6 +26,7 @@ import {
   Badge,
   IconButton,
 } from '@chakra-ui/react';
+import PageLoading from '../components/PageLoading';
 import { FiArrowUpRight, FiArrowDownRight, FiCheck, FiAlertTriangle, FiAlertCircle, FiInfo, FiDownload, FiChevronDown, FiCheckCircle, FiCircle, FiArrowRight } from 'react-icons/fi';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 import { cyclesService, Cycle } from '../services/cycles.service';
@@ -229,12 +229,18 @@ export default function Dashboard() {
     }
   };
 
+  const { startDownload } = useDownload();
+
   const handleExportCyclesCsv = async () => {
     setExporting(true);
     try {
-      const response = await exportService.exportCycles(period > 0 ? period : undefined);
-      const blob = new Blob([response.data], { type: 'text/csv;charset=utf-8' });
-      await downloadFile(blob, 'cycles-export.csv');
+      await startDownload({
+        fileName: 'cycles-export.csv',
+        fetch: (onProgress) =>
+          exportService.exportCycles(period > 0 ? period : undefined, onProgress).then((r) =>
+            new Blob([r.data], { type: 'text/csv;charset=utf-8' })
+          ),
+      });
     } catch {
       setError('Erreur lors de l\'export CSV');
     } finally {
@@ -267,7 +273,7 @@ export default function Dashboard() {
   };
 
   if (loading) {
-    return <Box display="flex" justifyContent="center" py={20}><Spinner size="xl" color="accent.1" /></Box>;
+    return <PageLoading fillHeight />;
   }
 
   return (

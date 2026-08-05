@@ -39,19 +39,15 @@ export default function ProfilModal({ isOpen, onClose, user }: ProfilModalProps)
               <Text color="text.1" fontSize={{ base: "sm", md: "ms" }}>{user?.email}</Text>
             </Box>
 
-            {user?.telephone && (
-              <Box>
-                <Text mb={1} fontSize={{ base: "sm", md: "ms" }} color="text.3" fontWeight="medium">Téléphone</Text>
-                <Text color="text.1" fontSize={{ base: "sm", md: "ms" }}>{user.telephone}</Text>
-              </Box>
-            )}
+            <Box>
+              <Text mb={1} fontSize={{ base: "sm", md: "ms" }} color="text.3" fontWeight="medium">Téléphone</Text>
+              <Text color="text.1" fontSize={{ base: "sm", md: "ms" }}>{user?.telephone || '—'}</Text>
+            </Box>
 
-            {user?.adresse && (
-              <Box>
-                <Text mb={1} fontSize={{ base: "sm", md: "ms" }} color="text.3" fontWeight="medium">Adresse</Text>
-                <Text color="text.1" fontSize={{ base: "sm", md: "ms" }}>{user.adresse}</Text>
-              </Box>
-            )}
+            <Box>
+              <Text mb={1} fontSize={{ base: "sm", md: "ms" }} color="text.3" fontWeight="medium">Adresse</Text>
+              <Text color="text.1" fontSize={{ base: "sm", md: "ms" }}>{user?.adresse || '—'}</Text>
+            </Box>
 
             <Box>
               <Text mb={1} fontSize={{ base: "sm", md: "ms" }} color="text.3" fontWeight="medium">Créé le</Text>
@@ -60,32 +56,32 @@ export default function ProfilModal({ isOpen, onClose, user }: ProfilModalProps)
               </Text>
             </Box>
 
-            {user?.updated_at && (
-              <Box>
-                <Text mb={1} fontSize={{ base: "sm", md: "ms" }} color="text.3" fontWeight="medium">Mis à jour le</Text>
-                <Text color="text.2" fontSize={{ base: "sm", md: "ms" }}>
-                  {new Date(user.updated_at).toLocaleDateString('fr-FR')}
-                </Text>
-              </Box>
-            )}
+            <Box>
+              <Text mb={1} fontSize={{ base: "sm", md: "ms" }} color="text.3" fontWeight="medium">Mis à jour le</Text>
+              <Text color="text.2" fontSize={{ base: "sm", md: "ms" }}>
+                {user?.updated_at ? new Date(user.updated_at).toLocaleDateString('fr-FR') : '—'}
+              </Text>
+            </Box>
           </VStack>
         </ModalBody>
 
         <ModalFooter>
-          <Button
-            bg="accent.1"
-            color="gray.900"
-            _hover={{ bg: 'accent.2' }}
-            fontWeight="bold"
-            onClick={() => {
-              onClose();
-              navigate('/parametrage');
-            }}
-            size={{ base: "md", md: "sm" }}
-            w={{ base: "100%", md: "auto" }}
-          >
-            Modifier mon profil
-          </Button>
+          {user?.role === 'admin' && (
+            <Button
+              bg="accent.1"
+              color="gray.900"
+              _hover={{ bg: 'accent.2' }}
+              fontWeight="bold"
+              onClick={() => {
+                onClose();
+                navigate('/parametrage');
+              }}
+              size={{ base: "md", md: "sm" }}
+              w={{ base: "100%", md: "auto" }}
+            >
+              Modifier mon profil
+            </Button>
+          )}
         </ModalFooter>
       </ModalContent>
     </Modal>

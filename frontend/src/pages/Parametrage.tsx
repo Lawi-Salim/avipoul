@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { downloadFile } from '../utils/downloadFile';
+import { useDownload } from '../contexts/DownloadContext';
 import {
   Box,
   Button,
@@ -14,14 +14,24 @@ import {
   Alert,
   AlertIcon,
   SimpleGrid,
-  Spinner,
-  Center,
   Badge,
   RadioGroup,
   Radio,
   Stack,
+  Divider,
+  Icon,
 } from '@chakra-ui/react';
-import { FiDownload } from 'react-icons/fi';
+import PageLoading from '../components/PageLoading';
+import {
+  FiDownload,
+  FiDollarSign,
+  FiAlertTriangle,
+  FiClock,
+  FiPercent,
+  FiUser,
+  FiLock,
+  FiDatabase,
+} from 'react-icons/fi';
 import { parametragesService } from '../services/parametrages.service';
 import type { Parametrage } from '../services/parametrages.service';
 import { remisesService, RemiseTypeClient, RemiseVolume } from '../services/remises.service';
@@ -55,6 +65,32 @@ const FIELDS = [
   { key: 'duree_phase_finition' as const, label: 'Durée finition (jours)', desc: 'Aliment finition et prise de poids avant vente' },
   { key: 'duree_phase_commercialisation' as const, label: 'Durée commercialisation (jours)', desc: 'Vente des poulets aux clients' },
   { key: 'duree_phase_nettoyage' as const, label: 'Durée nettoyage (jours)', desc: 'Désinfection après clôture du cycle' },
+];
+
+// Regroupement des champs par thématique, pour une lecture plus claire que la grille unique d'origine
+const FIELD_GROUPS = [
+  {
+    title: 'Tarification',
+    icon: FiDollarSign,
+    keys: ['cout_standard_poussin', 'prix_vente_standard'] as const,
+  },
+  {
+    title: "Seuils d'alerte",
+    icon: FiAlertTriangle,
+    keys: ['seuil_mortalite_critique_pct', 'seuil_stock_bas_jours'] as const,
+  },
+  {
+    title: 'Durées des phases du cycle',
+    icon: FiClock,
+    keys: [
+      'duree_phase_preparation',
+      'duree_phase_demarrage',
+      'duree_phase_croissance',
+      'duree_phase_finition',
+      'duree_phase_commercialisation',
+      'duree_phase_nettoyage',
+    ] as const,
+  },
 ];
 
 export default function Parametrage() {
@@ -134,12 +170,18 @@ export default function Parametrage() {
     }
   };
 
+  const { startDownload } = useDownload();
+
   const handleExportDonneesBrutes = async () => {
     setExporting(true);
     try {
-      const response = await exportService.exportDonneesBrutes();
-      const blob = new Blob([response.data], { type: 'text/csv;charset=utf-8' });
-      await downloadFile(blob, 'donnees-brutes-export.csv');
+      await startDownload({
+        fileName: 'donnees-brutes-export.csv',
+        fetch: (onProgress) =>
+          exportService.exportDonneesBrutes(onProgress).then((r) =>
+            new Blob([r.data], { type: 'text/csv;charset=utf-8' })
+          ),
+      });
     } catch {
       setError('Erreur lors de l\'export des données brutes');
     } finally {
@@ -196,19 +238,24 @@ export default function Parametrage() {
   };
 
   if (loading) {
-    return <Center py={20}><Spinner size="xl" color="accent.1" /></Center>;
+    return <PageLoading fillHeight />;
   }
 
   const form = data || DEFAULTS;
 
   return (
     <VStack spacing={6} align="stretch">
-      <HStack justify="space-between" flexWrap="wrap" gap={2}>
-        <Heading size={{ base: "md", md: "lg" }} color="text.1">Paramétrage</Heading>
+      <Flex justify="space-between" align={{ base: "flex-start", sm: "center" }} flexWrap="wrap" gap={3}>
+        <Box>
+          <Heading size={{ base: "md", md: "lg" }} color="text.1">Paramétrage</Heading>
+          <Text mt={1} fontSize={{ base: "sm", md: "ms" }} color="text.3">
+            Valeurs par défaut, remises et compte utilisateur
+          </Text>
+        </Box>
         <Badge bg="accent.1" color="gray.900" borderRadius="full" px={3} py={1} fontSize={responsiveText.xs}>
           Configuration globale
         </Badge>
-      </HStack>
+      </Flex>
 
       {!data && (
         <Alert bg="warning.1" color="white" borderRadius="md" size="sm">
@@ -233,24 +280,37 @@ export default function Parametrage() {
 
       <Card bg="surface.1" borderColor="border.1" borderWidth="1px">
         <CardBody>
-          <SimpleGrid columns={{ base: 1, md: 2 }} spacing={6}>
-            {FIELDS.map(({ key, label, desc }) => (
-              <Box key={key}>
-                <Text mb={1} fontSize={{ base: "sm", md: "ms" }} color="text.2" fontWeight="medium">{label}</Text>
-                <Input
-                  type="number"
-                  value={form[key]}
-                  onChange={(e) => setData({ ...form, [key]: Number(e.target.value) } as Parametrage)}
-                  bg="surface.2"
-                  borderColor="border.1"
-                  borderRadius="md"
-                  size={{ base: "md", md: "sm" }}
-                  _focus={{ borderColor: 'accent.1', boxShadow: '0 0 0 1px var(--chakra-colors-accent-1)' }}
-                />
-                <Text mt={1} fontSize={{ base: "sm", md: "xs" }} color="text.3">{desc}</Text>
+          <VStack align="stretch" spacing={6}>
+            {FIELD_GROUPS.map((group, groupIndex) => (
+              <Box key={group.title}>
+                <HStack spacing={2} mb={4}>
+                  <Icon as={group.icon} color="accent.1" boxSize={4} />
+                  <Text fontSize={{ base: "sm", md: "ms" }} color="text.2" fontWeight="bold" textTransform="uppercase" letterSpacing="wide">
+                    {group.title}
+                  </Text>
+                </HStack>
+                <SimpleGrid columns={{ base: 1, md: 2 }} spacing={5}>
+                  {FIELDS.filter((f) => (group.keys as readonly string[]).includes(f.key)).map(({ key, label, desc }) => (
+                    <Box key={key}>
+                      <Text mb={1} fontSize={{ base: "sm", md: "ms" }} color="text.1" fontWeight="medium">{label}</Text>
+                      <Input
+                        type="number"
+                        value={form[key]}
+                        onChange={(e) => setData({ ...form, [key]: Number(e.target.value) } as Parametrage)}
+                        bg="surface.2"
+                        borderColor="border.1"
+                        borderRadius="md"
+                        size={{ base: "md", md: "sm" }}
+                        _focus={{ borderColor: 'accent.1', boxShadow: '0 0 0 1px var(--chakra-colors-accent-1)' }}
+                      />
+                      <Text mt={1} fontSize={{ base: "sm", md: "xs" }} color="text.3">{desc}</Text>
+                    </Box>
+                  ))}
+                </SimpleGrid>
+                {groupIndex < FIELD_GROUPS.length - 1 && <Divider borderColor="border.1" mt={6} />}
               </Box>
             ))}
-          </SimpleGrid>
+          </VStack>
 
           <HStack justify="flex-end" mt={6}>
             <Button
@@ -261,6 +321,7 @@ export default function Parametrage() {
               isLoading={saving}
               fontWeight="bold"
               size={{ base: "md", md: "sm" }}
+              w={{ base: "100%", md: "auto" }}
             >
               {data ? 'Sauvegarder' : 'Créer le paramétrage'}
             </Button>
@@ -270,21 +331,40 @@ export default function Parametrage() {
 
       <Card bg="surface.1" borderColor="border.1" borderWidth="1px">
         <CardBody>
-          <Heading size="md" color="text.1" mb={4} fontSize={{ base: "ms", md: "md" }}>Mode de remise</Heading>
+          <HStack spacing={2} mb={1}>
+            <Icon as={FiPercent} color="accent.1" boxSize={4} />
+            <Heading size="md" color="text.1" fontSize={{ base: "ms", md: "md" }}>Mode de remise</Heading>
+          </HStack>
           <Text mb={4} fontSize={{ base: "sm", md: "ms" }} color="text.3">
             Choisissez le type de remise à appliquer automatiquement lors des ventes.
           </Text>
           <RadioGroup value={remiseMode} onChange={(value) => setRemiseMode(value as 'type_client' | 'volume' | 'aucun')}>
-            <Stack direction="row" spacing={6}>
-              <Radio value="type_client" colorScheme="green">
-                <Text fontSize={{ base: "sm", md: "ms" }} color="text.1">Par type de client</Text>
-              </Radio>
-              <Radio value="volume" colorScheme="green">
-                <Text fontSize={{ base: "sm", md: "ms" }} color="text.1">Par volume</Text>
-              </Radio>
-              <Radio value="aucun" colorScheme="green">
-                <Text fontSize={{ base: "sm", md: "ms" }} color="text.1">Aucune remise</Text>
-              </Radio>
+            <Stack direction={{ base: "column", sm: "row" }} spacing={3}>
+              {[
+                { value: 'type_client', label: 'Par type de client' },
+                { value: 'volume', label: 'Par volume' },
+                { value: 'aucun', label: 'Aucune remise' },
+              ].map(({ value, label }) => (
+                <Box
+                  key={value}
+                  as="label"
+                  flex="1"
+                  cursor="pointer"
+                  bg="surface.2"
+                  borderWidth="1px"
+                  borderColor={remiseMode === value ? 'accent.1' : 'border.1'}
+                  borderRadius="md"
+                  px={4}
+                  py={3}
+                  transition="border-color 0.15s ease"
+                >
+                  <Radio value={value} colorScheme="green">
+                    <Text fontSize={{ base: "sm", md: "ms" }} color="text.1" fontWeight={remiseMode === value ? 'bold' : 'normal'}>
+                      {label}
+                    </Text>
+                  </Radio>
+                </Box>
+              ))}
             </Stack>
           </RadioGroup>
         </CardBody>
@@ -292,9 +372,12 @@ export default function Parametrage() {
 
       <Card bg="surface.1" borderColor="border.1" borderWidth="1px">
         <CardBody opacity={remiseMode !== 'aucun' ? 1 : 0.5} pointerEvents={remiseMode !== 'aucun' ? 'auto' : 'none'}>
-          <Heading size="md" color="text.1" mb={4} fontSize={{ base: "ms", md: "md" }}>Remises par type de client</Heading>
+          <HStack spacing={2} mb={4}>
+            <Icon as={FiPercent} color="accent.1" boxSize={4} />
+            <Heading size="md" color="text.1" fontSize={{ base: "ms", md: "md" }}>Remises par type de client</Heading>
+          </HStack>
           {loadingRemises ? (
-            <Center py={6}><Spinner size="md" color="accent.1" /></Center>
+            <PageLoading size="sm" py={6} />
           ) : (
             <>
               <Box opacity={remiseMode === 'type_client' ? 1 : 0.5} pointerEvents={remiseMode === 'type_client' ? 'auto' : 'none'}>
@@ -329,7 +412,12 @@ export default function Parametrage() {
                 </SimpleGrid>
               </Box>
 
-              <Heading size="md" color="text.1" mb={4} fontSize={{ base: "ms", md: "md" }}>Remises par volume</Heading>
+              <Divider borderColor="border.1" mb={6} />
+
+              <HStack spacing={2} mb={4}>
+                <Icon as={FiPercent} color="accent.1" boxSize={4} />
+                <Heading size="md" color="text.1" fontSize={{ base: "ms", md: "md" }}>Remises par volume</Heading>
+              </HStack>
               <Box opacity={remiseMode === 'volume' ? 1 : 0.5} pointerEvents={remiseMode === 'volume' ? 'auto' : 'none'}>
                 <SimpleGrid columns={{ base: 2, sm: 2, md: 3 }} spacing={4} mb={6}>
                   {remisesVolume.map((remise, index) => (
@@ -402,7 +490,10 @@ export default function Parametrage() {
 
       <Card bg="surface.1" borderColor="border.1" borderWidth="1px">
         <CardBody>
-          <Heading size="md" color="text.1" mb={4} fontSize={{ base: "ms", md: "md" }}>Mon profil</Heading>
+          <HStack spacing={2} mb={4}>
+            <Icon as={FiUser} color="accent.1" boxSize={4} />
+            <Heading size="md" color="text.1" fontSize={{ base: "ms", md: "md" }}>Mon profil</Heading>
+          </HStack>
           
           {profilError && (
             <Alert bg="danger.1" color="white" borderRadius="md" size="sm" mb={4}>
@@ -480,7 +571,14 @@ export default function Parametrage() {
                 size={{ base: "md", md: "sm" }}
               />
             </Box>
-            
+          </SimpleGrid>
+
+          <Divider borderColor="border.1" my={5} />
+
+          <Text mb={3} fontSize={{ base: "sm", md: "ms" }} color="text.2" fontWeight="bold" textTransform="uppercase" letterSpacing="wide">
+            Informations du compte
+          </Text>
+          <SimpleGrid columns={{ base: 1, md: 3 }} spacing={4}>
             <Box>
               <Text mb={1} fontSize={{ base: "sm", md: "ms" }} color="text.2" fontWeight="medium">Rôle</Text>
               <Input
@@ -494,9 +592,7 @@ export default function Parametrage() {
                 _disabled={{ opacity: 1, cursor: 'default' }}
               />
             </Box>
-          </SimpleGrid>
 
-          <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4} mt={4}>
             <Box>
               <Text mb={1} fontSize={{ base: "sm", md: "ms" }} color="text.2" fontWeight="medium">Créé le</Text>
               <Input
@@ -526,7 +622,7 @@ export default function Parametrage() {
             </Box>
           </SimpleGrid>
           
-          <Flex mt={4} justify={{ base: "stretch", md: "flex-end" }}>
+          <Flex mt={5} justify={{ base: "stretch", md: "flex-end" }}>
             <Button
               bg="accent.1"
               color="gray.900"
@@ -545,7 +641,10 @@ export default function Parametrage() {
 
       <Card bg="surface.1" borderColor="border.1" borderWidth="1px">
         <CardBody>
-          <Heading size="md" color="text.1" mb={4} fontSize={{ base: "ms", md: "md" }}>Changer le mot de passe</Heading>
+          <HStack spacing={2} mb={4}>
+            <Icon as={FiLock} color="accent.1" boxSize={4} />
+            <Heading size="md" color="text.1" fontSize={{ base: "ms", md: "md" }}>Changer le mot de passe</Heading>
+          </HStack>
           
           <Flex gap={4} align={{ base: "stretch", md: "flex-end" }} direction={{ base: "column", md: "row" }}>
             <Box flex={{ base: "1 1 100%", md: "1 1 0" }} minW={0}>
@@ -607,7 +706,10 @@ export default function Parametrage() {
 
       <Card bg="surface.1" borderColor="border.1" borderWidth="1px">
         <CardBody>
-          <Heading size="md" color="text.1" mb={4} fontSize={{ base: "ms", md: "md" }}>Administration</Heading>
+          <HStack spacing={2} mb={1}>
+            <Icon as={FiDatabase} color="accent.1" boxSize={4} />
+            <Heading size="md" color="text.1" fontSize={{ base: "ms", md: "md" }}>Administration</Heading>
+          </HStack>
           <Text mb={4} fontSize={{ base: "sm", md: "ms" }} color="text.3">
             Export complet des données de l'application (cycles, mortalités, ventes, dépenses, clients). Réservé aux administrateurs.
           </Text>

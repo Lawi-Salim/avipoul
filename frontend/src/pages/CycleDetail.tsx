@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from 'react';
-import { downloadFile } from '../utils/downloadFile';
+import { useDownload } from '../contexts/DownloadContext';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
   Box,
@@ -14,7 +14,6 @@ import {
   MenuList,
   MenuItem,
   SimpleGrid,
-  Spinner,
   Table,
   Thead,
   Tbody,
@@ -41,6 +40,7 @@ import {
   ModalBody,
   ModalCloseButton,
 } from '@chakra-ui/react';
+import PageLoading from '../components/PageLoading';
 import { FiArrowLeft, FiPlus, FiTrash2, FiCheck, FiEdit2, FiDownload, FiEye, FiChevronDown, FiArrowRight } from 'react-icons/fi';
 import { cyclesService, Cycle } from '../services/cycles.service';
 import { stocksService, Stock, CreateStockPayload } from '../services/stocks.service';
@@ -198,14 +198,20 @@ export default function CycleDetail() {
     }
   };
 
+  const { startDownload } = useDownload();
+
   const handleExportPdf = async () => {
     if (!id) return;
     setPdfLoading(true);
     setError('');
     try {
-      const response = await cyclesService.exportPdf(id);
-      const blob = new Blob([response.data], { type: 'application/pdf' });
-      await downloadFile(blob, `rapport-cycle-${cycle?.numero_cycle || id}.pdf`);
+      await startDownload({
+        fileName: `rapport-cycle-${cycle?.numero_cycle || id}.pdf`,
+        fetch: (onProgress) =>
+          cyclesService.exportPdf(id, onProgress).then((r) =>
+            new Blob([r.data], { type: 'application/pdf' })
+          ),
+      });
     } catch {
       setError('Erreur lors de la génération du PDF. Vérifiez que le service PDF est actif.');
     } finally {
@@ -305,7 +311,7 @@ export default function CycleDetail() {
   const totalStockCout = (stocks || []).reduce((sum, s) => sum + Number(s.cout), 0);
 
   if (loading) {
-    return <Box display="flex" justifyContent="center" py={20}><Spinner size="xl" color="accent.1" /></Box>;
+    return <PageLoading fillHeight />;
   }
 
   if (!cycle) {
@@ -909,7 +915,7 @@ export default function CycleDetail() {
                 </SimpleGrid>
               </VStack>
             ) : (
-              <Text color="text.3" textAlign="center" py={6}>Chargement des donnees financieres...</Text>
+              <PageLoading size="sm" label="Chargement des données financières..." py={6} />
             )}
           </TabPanel>
         </TabPanels>

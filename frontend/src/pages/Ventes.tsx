@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback, useMemo } from 'react';
-import { downloadFile } from '../utils/downloadFile';
+import { useDownload } from '../contexts/DownloadContext';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
   Box,
@@ -37,6 +37,7 @@ import {
   InputGroup,
   InputLeftElement,
 } from '@chakra-ui/react';
+import PageLoading from '../components/PageLoading';
 import { FiPlus, FiTrash2, FiEdit2, FiSearch, FiExternalLink, FiCheckCircle, FiDownload, FiEye, FiChevronDown } from 'react-icons/fi';
 import { cyclesService, Cycle } from '../services/cycles.service';
 import { ventesService, Vente, CreateVentePayload, CATEGORIE_PRODUIT_LABELS, CategorieProduit } from '../services/ventes.service';
@@ -259,12 +260,18 @@ export default function Ventes() {
     }
   };
 
+  const { startDownload } = useDownload();
+
   const handleExportFacture = async (venteId: string) => {
     setPdfLoadingId(venteId);
     try {
-      const response = await ventesService.exportFacturePdf(venteId);
-      const blob = new Blob([response.data], { type: 'application/pdf' });
-      await downloadFile(blob, `facture-${venteId}.pdf`);
+      await startDownload({
+        fileName: `facture-${venteId}.pdf`,
+        fetch: (onProgress) =>
+          ventesService.exportFacturePdf(venteId, onProgress).then((r) =>
+            new Blob([r.data], { type: 'application/pdf' })
+          ),
+      });
     } catch {
       setError('Erreur lors de la génération de la facture. Vérifiez que le service PDF est actif.');
     } finally {
@@ -275,12 +282,13 @@ export default function Ventes() {
   const handleExportVentesCsv = async () => {
     setExporting(true);
     try {
-      const response = await exportService.exportVentes(
-        selectedCycle || undefined,
-        filterStatut !== 'tous' ? filterStatut : undefined,
-      );
-      const blob = new Blob([response.data], { type: 'text/csv;charset=utf-8' });
-      await downloadFile(blob, 'ventes-export.csv');
+      await startDownload({
+        fileName: 'ventes-export.csv',
+        fetch: (onProgress) =>
+          exportService.exportVentes(selectedCycle || undefined, filterStatut !== 'tous' ? filterStatut : undefined, onProgress).then((r) =>
+            new Blob([r.data], { type: 'text/csv;charset=utf-8' })
+          ),
+      });
     } catch {
       setError('Erreur lors de l\'export CSV');
     } finally {
@@ -333,7 +341,7 @@ export default function Ventes() {
     .reduce((sum, v) => sum + Number(v.quantite), 0);
 
   if (loading) {
-    return <Box display="flex" justifyContent="center" py={20}><Text color="text.3">Chargement...</Text></Box>;
+    return <PageLoading fillHeight />;
   }
 
   return (

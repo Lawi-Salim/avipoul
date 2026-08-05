@@ -25,6 +25,7 @@ import {
   MenuList,
   MenuItem,
 } from '@chakra-ui/react';
+import PageLoading from '../components/PageLoading';
 import { FiPlus, FiTrash2, FiChevronDown } from 'react-icons/fi';
 import { cyclesService, Cycle } from '../services/cycles.service';
 import { stocksService, Stock, CreateStockPayload } from '../services/stocks.service';
@@ -142,7 +143,7 @@ export default function Stocks() {
   }, {} as Record<string, { entree: number; sortie: number }>);
 
   if (loading) {
-    return <Box display="flex" justifyContent="center" py={20}><Text color="text.3">Chargement...</Text></Box>;
+    return <PageLoading fillHeight />;
   }
 
   return (

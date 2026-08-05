@@ -1,5 +1,5 @@
 import { useEffect, useState, useMemo } from 'react';
-import { downloadFile } from '../utils/downloadFile';
+import { useDownload } from '../contexts/DownloadContext';
 import { useNavigate } from 'react-router-dom';
 import {
   Box,
@@ -36,6 +36,7 @@ import {
   InputGroup,
   InputLeftElement,
 } from '@chakra-ui/react';
+import PageLoading from '../components/PageLoading';
 import { FiPlus, FiTrash2, FiEdit2, FiSearch, FiUser, FiDownload, FiChevronDown } from 'react-icons/fi';
 import { clientsService, Client, CreateClientPayload } from '../services/clients.service';
 import { exportService } from '../services/export.service';
@@ -137,12 +138,18 @@ export default function Clients() {
     setDeleteTargetId(id);
   };
 
+  const { startDownload } = useDownload();
+
   const handleExportClientsCsv = async () => {
     setExporting(true);
     try {
-      const response = await exportService.exportClients();
-      const blob = new Blob([response.data], { type: 'text/csv;charset=utf-8' });
-      await downloadFile(blob, 'clients-export.csv');
+      await startDownload({
+        fileName: 'clients-export.csv',
+        fetch: (onProgress) =>
+          exportService.exportClients(onProgress).then((r) =>
+            new Blob([r.data], { type: 'text/csv;charset=utf-8' })
+          ),
+      });
     } catch {
       setError('Erreur lors de l\'export CSV');
     } finally {
@@ -196,7 +203,7 @@ export default function Clients() {
   useEffect(() => { setCurrentPage(1); }, [search, filterType, sortBy]);
 
   if (loading) {
-    return <Box display="flex" justifyContent="center" py={20}><Text color="text.3">Chargement...</Text></Box>;
+    return <PageLoading fillHeight />;
   }
 
   return (

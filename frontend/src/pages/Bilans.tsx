@@ -22,9 +22,8 @@ import {
   Th,
   Td,
   Badge,
-  Spinner,
-  Center,
 } from '@chakra-ui/react';
+import PageLoading from '../components/PageLoading';
 import { FiChevronDown } from 'react-icons/fi';
 import { cyclesService, Cycle } from '../services/cycles.service';
 import { depensesService, Depense } from '../services/depenses.service';
@@ -111,7 +110,7 @@ export default function Bilans() {
     : '0';
 
   if (loading) {
-    return <Center py={20}><Spinner size="xl" color="accent.1" /></Center>;
+    return <PageLoading fillHeight />;
   }
 
   return (

@@ -3,8 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import {
   Box,
   Button,
-  Card,
-  CardBody,
   Heading,
   HStack,
   Input,
@@ -15,13 +13,15 @@ import {
   VStack,
   Alert,
   AlertIcon,
+  IconButton,
 } from '@chakra-ui/react';
-import { FiEye, FiEyeOff } from 'react-icons/fi';
+import { FiEye, FiEyeOff, FiMoon, FiSun } from 'react-icons/fi';
 import { useAuth } from '../contexts/AuthContext';
 import logoDark from '../assets/img/logo-png-3x.png';
 import logoLight from '../assets/img/logo-png--3x.png';
 import logo from '../assets/img/logo.png';
 import { useThemeMode } from '../theme/ThemeMode';
+import PoultryBackground from '../components/PoultryBackground';
 
 export default function Login() {
   const [email, setEmail] = useState('');
@@ -49,105 +49,154 @@ export default function Login() {
   };
 
   return (
-    <Box minH="100vh" bg="surface.0" display="flex" alignItems="center" justifyContent="center" px={4}>
-      <Card bg="surface.1" borderColor="border.1" borderWidth="1px" maxW="420px" w="full">
-        <CardBody p={8}>
-          <VStack spacing={6} as="form" onSubmit={handleSubmit}>
-            <VStack spacing={1}>
-              <HStack spacing={2}>
-                <Image
-                  // src={colorMode === 'light' ? logoLight : logoDark}
-                  src={logo}
-                  alt="AVIPOUL"
-                  h="40px"
-                />
-              </HStack>
-              <Text color="text.3" fontSize="sm">Gestion avipoul — Connexion</Text>
-            </VStack>
+    <Box minH="100vh" bg="surface.0" display="flex" position="relative" overflow="hidden">
+      <PoultryBackground />
 
-            {error && (
-              <Alert bg="danger.1" color="white" borderRadius="md" size="sm">
-                <AlertIcon />
-                {error}
-              </Alert>
-            )}
+      {/* Partie gauche : voile noir transparent */}
+      <Box
+        position="relative"
+        flex={1}
+        bg={colorMode === 'light' ? 'rgba(0, 0, 0, 0.1)' : 'rgba(0, 0, 0, 0.2)'}
+        display={{ base: 'none', md: 'block' }}
+      >
+        <Box
+          h="100%"
+          display="flex"
+          flexDirection="column"
+          alignItems="center"
+          justifyContent="center"
+          textAlign="center"
+          px={8}
+        >
+          <VStack spacing={4}>
+            <Heading size="lg" color="text.1">
+              Bienvenue sur Avipoul
+            </Heading>
+            <Text color="text.1" fontSize="sm" maxW="320px">
+              Pilotez votre élevage avicole en toute simplicité : suivez vos cycles, gérez ventes,
+              stocks et finances depuis une seule plateforme.
+            </Text>
+          </VStack>
+        </Box>
 
-            <VStack spacing={4} w="full">
-              <Box w="full">
-                <Text mb={1} fontSize="sm" color="text.2">Email</Text>
+        <IconButton
+          position="absolute"
+          bottom={4}
+          left={4}
+          aria-label="Changer de thème"
+          icon={colorMode === 'light' ? <FiMoon size={18} /> : <FiSun size={18} />}
+          variant="ghost"
+          size="sm"
+          color="text.1"
+          onClick={toggleThemeMode}
+        />
+      </Box>
+
+      {/* Partie droite : contenu de connexion */}
+      <Box
+        position="relative"
+        flex={2}
+        display="flex"
+        alignItems="center"
+        justifyContent="center"
+        px={{ base: 14, md: 4 }}
+        py={10}
+      >
+        <VStack spacing={6} as="form" onSubmit={handleSubmit} w="full" maxW="420px">
+          <VStack spacing={1}>
+            <HStack spacing={2}>
+              <Image
+                // src={colorMode === 'light' ? logoLight : logoDark}
+                src={logo}
+                alt="AVIPOUL"
+                h="40px"
+              />
+            </HStack>
+            <Text color="text.3" fontSize="sm">Gestion avipoul — Connexion</Text>
+          </VStack>
+
+          {error && (
+            <Alert bg="danger.1" color="white" borderRadius="md" size="sm">
+              <AlertIcon />
+              {error}
+            </Alert>
+          )}
+
+          <VStack spacing={4} w="full">
+            <Box w="full">
+              <Text mb={1} fontSize="sm" color="text.2">Email</Text>
+              <Input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                bg="surface.2"
+                borderColor="border.1"
+                _focus={{ borderColor: 'accent.1', boxShadow: '0 0 0 1px var(--chakra-colors-accent-1)' }}
+                placeholder="adresse@email.com"
+                fontSize="sm"
+                h={8}
+                required
+              />
+            </Box>
+
+            <Box w="full">
+              <Text mb={1} fontSize="sm" color="text.2">
+                Mot de passe
+              </Text>
+              <InputGroup size="sm"> {/* Ajout de size="sm" pour harmoniser le groupe */}
                 <Input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  type={showPassword ? 'text' : 'password'}
+                  value={motDePasse}
+                  onChange={(e) => setMotDePasse(e.target.value)}
                   bg="surface.2"
                   borderColor="border.1"
-                  _focus={{ borderColor: 'accent.1', boxShadow: '0 0 0 1px var(--chakra-colors-accent-1)' }}
-                  placeholder="adresse@email.com"
+                  _focus={{
+                    borderColor: 'accent.1',
+                    boxShadow: '0 0 0 1px var(--chakra-colors-accent-1)',
+                  }}
+                  placeholder="••••••••"
                   fontSize="sm"
                   h={8}
+                  pr="2.5rem"
                   required
+                  borderRadius="md"
+                  autoComplete="new-password"
                 />
-              </Box>
-
-              <Box w="full">
-                <Text mb={1} fontSize="sm" color="text.2">
-                  Mot de passe
-                </Text>
-                <InputGroup size="sm"> {/* Ajout de size="sm" pour harmoniser le groupe */}
-                  <Input
-                    type={showPassword ? 'text' : 'password'}
-                    value={motDePasse}
-                    onChange={(e) => setMotDePasse(e.target.value)}
-                    bg="surface.2"
-                    borderColor="border.1"
-                    _focus={{
-                      borderColor: 'accent.1',
-                      boxShadow: '0 0 0 1px var(--chakra-colors-accent-1)',
-                    }}
-                    placeholder="••••••••"
-                    fontSize="sm"
-                    h={8}
-                    pr="2.5rem"
-                    required
+                {/* Contrainte de hauteur h={8} pour s'aligner parfaitement sur l'input */}
+                <InputRightElement h={8} w="2.5rem">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    h="1.5rem"
+                    w="1.5rem"
+                    minW="auto"
+                    onClick={() => setShowPassword(!showPassword)}
+                    color="text.3"
+                    p={0}
                     borderRadius="md"
-                    autoComplete="new-password"
-                  />
-                  {/* Contrainte de hauteur h={8} pour s'aligner parfaitement sur l'input */}
-                  <InputRightElement h={8} w="2.5rem">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      h="1.5rem"
-                      w="1.5rem"
-                      minW="auto"
-                      onClick={() => setShowPassword(!showPassword)}
-                      color="text.3"
-                      p={0}
-                      borderRadius="md"
-                    >
-                      {showPassword ? <Box as={FiEyeOff} size={16} /> : <Box as={FiEye} size={16} />}
-                    </Button>
-                  </InputRightElement>
-                </InputGroup>
-              </Box>
-            </VStack>
-
-            <Button
-              type="submit"
-              bg="accent.1"
-              color="gray.900"
-              _hover={{ bg: 'accent.2' }}
-              w="full"
-              isLoading={loading}
-              fontWeight="bold"
-              fontSize="sm"
-              size="sm"
-            >
-              Se connecter
-            </Button>
+                  >
+                    {showPassword ? <Box as={FiEyeOff} size={16} /> : <Box as={FiEye} size={16} />}
+                  </Button>
+                </InputRightElement>
+              </InputGroup>
+            </Box>
           </VStack>
-        </CardBody>
-      </Card>
+
+          <Button
+            type="submit"
+            bg="accent.1"
+            color="gray.900"
+            _hover={{ bg: 'accent.2' }}
+            w="full"
+            isLoading={loading}
+            fontWeight="bold"
+            fontSize="sm"
+            size="sm"
+          >
+            Se connecter
+          </Button>
+        </VStack>
+      </Box>
     </Box>
   );
 }

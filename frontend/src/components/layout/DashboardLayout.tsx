@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import {
   Box,
   Flex,
@@ -14,7 +14,6 @@ import {
   MenuButton,
   MenuList,
   MenuItem,
-  Heading,
   Button,
   Kbd,
 } from '@chakra-ui/react';
@@ -46,6 +45,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { DrawerCalculate } from '../../utils/DrawerCalculate';
 import { DrawerNotifications } from '../../utils/DrawerNotifications';
 import { UserAvatar } from '../../utils/Avatars';
+import ScrollBar from '../../utils/Scrollbar';
 import logoDark from '../../assets/img/logo-png-3x.png';
 import logoLight from '../../assets/img/logo-png--3x.png';
 import logo from '../../assets/img/logo.png';
@@ -56,6 +56,7 @@ import SidebarMobile from './SidebarMobile';
 import { responsiveText } from '../../theme/designTokens';
 import ConfirmModal from '../ConfirmModal';
 import { Search } from '../search/Search';
+import ProfilModal from '../ProfilModal';
 
 interface NavItemProps {
   icon: React.ReactNode;
@@ -190,8 +191,24 @@ function SidebarNav({ onClose }: { onClose?: () => void }) {
     },
   ];
 
+  const navRef = useRef<HTMLDivElement>(null);
+
   return (
-    <VStack spacing={0} align="stretch" flex={1} overflowY="auto" px={2} py={2}>
+    <Box position="relative" flex={1} minH={0}>
+      <VStack
+        ref={navRef}
+        spacing={0}
+        align="stretch"
+        overflowY="auto"
+        px={2}
+        py={2}
+        h="100%"
+        sx={{
+          scrollbarWidth: 'none',
+          msOverflowStyle: 'none',
+          '::-webkit-scrollbar': { display: 'none' },
+        }}
+      >
       {sections.map((section, sIdx) => {
         const visibleItems = section.items.filter((item: any) => !role || item.roles.includes(role));
         if (visibleItems.length === 0) return null;
@@ -242,7 +259,17 @@ function SidebarNav({ onClose }: { onClose?: () => void }) {
         </Box>
         );
       })}
-    </VStack>
+      </VStack>
+      <ScrollBar
+        scrollRef={navRef}
+        orientation="y"
+        top={0}
+        bottom={0}
+        right={0}
+        thumbCrossSize={4}
+        thumbColor="accent.60"
+      />
+    </Box>
   );
 }
 
@@ -499,112 +526,7 @@ function Navbar({ onCalculatorOpen, onMobileMenuOpen, isMobileSidebarOpen }: { o
         )}
       </HStack>
 
-      {showProfilModal && (
-        <Box
-          position="fixed"
-          top={0}
-          left={0}
-          right={0}
-          bottom={0}
-          bg="rgba(0, 0, 0, 0.5)"
-          zIndex={1000}
-          display="flex"
-          alignItems="center"
-          justifyContent="center"
-          p={4}
-          onClick={() => setShowProfilModal(false)}
-        >
-          <Box
-            bg="surface.1"
-            borderRadius="lg"
-            p={6}
-            maxW="500px"
-            w="full"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <HStack justify="space-between" align="center" mb={6}>
-              <Heading size="md" color="text.1" fontSize={{ base: "ms", md: "md" }}>Mon profil</Heading>
-              <Box
-                as="button"
-                onClick={() => setShowProfilModal(false)}
-                fontSize="xl"
-                color="text.2"
-                _hover={{ color: 'text.1' }}
-                cursor="pointer"
-              >
-                ×
-              </Box>
-            </HStack>
-
-            <Box display="flex" alignItems="center" mb={6}>
-              <Box pointerEvents="auto">
-                <UserAvatar name={`${user?.nom} ${user?.prenom || ''}`.trim()} size={64} src={user?.photo ?? null} />
-              </Box>
-              <Box ml={4}>
-                <Text fontSize="lg" fontWeight="bold" color="text.1">
-                  {`${user?.nom} ${user?.prenom || ''}`.trim()}
-                </Text>
-                <Text fontSize="sm" color="text.3">
-                  {user?.role === 'admin' ? 'Administrateur' : user?.role === 'employe' ? 'Employé' : 'Comptable'}
-                </Text>
-              </Box>
-            </Box>
-
-            <VStack spacing={4} align="stretch">
-              <Box>
-                <Text mb={1} fontSize={{ base: "sm", md: "ms" }} color="text.3" fontWeight="medium">Email</Text>
-                <Text color="text.1" fontSize={{ base: "sm", md: "ms" }}>{user?.email}</Text>
-              </Box>
-
-              {user?.telephone && (
-                <Box>
-                  <Text mb={1} fontSize={{ base: "sm", md: "ms" }} color="text.3" fontWeight="medium">Téléphone</Text>
-                  <Text color="text.1" fontSize={{ base: "sm", md: "ms" }}>{user.telephone}</Text>
-                </Box>
-              )}
-
-              {user?.adresse && (
-                <Box>
-                  <Text mb={1} fontSize={{ base: "sm", md: "ms" }} color="text.3" fontWeight="medium">Adresse</Text>
-                  <Text color="text.1" fontSize={{ base: "sm", md: "ms" }}>{user.adresse}</Text>
-                </Box>
-              )}
-
-              <Box>
-                <Text mb={1} fontSize={{ base: "sm", md: "ms" }} color="text.3" fontWeight="medium">Créé le</Text>
-                <Text color="text.2" fontSize={{ base: "sm", md: "ms" }}>
-                  {user?.created_at ? new Date(user.created_at).toLocaleDateString('fr-FR') : '—'}
-                </Text>
-              </Box>
-
-              {user?.updated_at && (
-                <Box>
-                  <Text mb={1} fontSize={{ base: "sm", md: "ms" }} color="text.3" fontWeight="medium">Mis à jour le</Text>
-                  <Text color="text.2" fontSize={{ base: "sm", md: "ms" }}>
-                    {new Date(user.updated_at).toLocaleDateString('fr-FR')}
-                  </Text>
-                </Box>
-              )}
-            </VStack>
-
-            <Button
-              bg="accent.1"
-              color="gray.900"
-              _hover={{ bg: 'accent.2' }}
-              fontWeight="bold"
-              onClick={() => {
-                setShowProfilModal(false);
-                navigate('/parametrage');
-              }}
-              size={{ base: "md", md: "sm" }}
-              mt={6}
-              w="full"
-            >
-              Modifier mon profil
-            </Button>
-          </Box>
-        </Box>
-      )}
+      <ProfilModal isOpen={showProfilModal} onClose={() => setShowProfilModal(false)} user={user} />
 
       <ConfirmModal
         isOpen={showLogoutConfirm}
@@ -633,6 +555,7 @@ function Navbar({ onCalculatorOpen, onMobileMenuOpen, isMobileSidebarOpen }: { o
 export default function DashboardLayout() {
   const [showCalculator, setShowCalculator] = useState(false);
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
+  const contentRef = useRef<HTMLDivElement>(null);
 
   return (
     <Flex h="100vh" overflow="hidden">
@@ -722,13 +645,30 @@ export default function DashboardLayout() {
         />
 
         {/* Content */}
-        <Box
-          flex={1}
-          bg="surface.0"
-          p={{ base: 3, lg: 6 }}
-          overflow="auto"
-        >
-          <Outlet />
+        <Box position="relative" flex={1} minH={0}>
+          <Box
+            ref={contentRef}
+            h="100%"
+            bg="surface.0"
+            p={{ base: 3, lg: 6 }}
+            overflow="auto"
+            sx={{
+              scrollbarWidth: 'none',
+              msOverflowStyle: 'none',
+              '::-webkit-scrollbar': { display: 'none' },
+            }}
+          >
+            <Outlet />
+          </Box>
+          <ScrollBar
+            scrollRef={contentRef}
+            orientation="y"
+            top={0}
+            bottom={0}
+            right={0}
+            thumbCrossSize={4}
+            thumbColor="accent.60"
+          />
         </Box>
       </Flex>
 

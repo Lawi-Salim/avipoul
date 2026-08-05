@@ -13,11 +13,11 @@ import {
   VStack,
   HStack,
   Box,
-  Spinner,
   Divider,
   Kbd,
   useMediaQuery,
 } from '@chakra-ui/react';
+import PageLoading from '../PageLoading';
 import {
   FiSearch,
   FiUsers,
@@ -31,6 +31,7 @@ import {
 } from 'react-icons/fi';
 import type { IconType } from 'react-icons';
 import { useAuth } from '../../contexts/AuthContext';
+import PoultryBackground from '../PoultryBackground';
 import {
   rechercheService,
   RechercheClient,
@@ -259,6 +260,7 @@ export function Search({ isOpen, onClose }: SearchProps) {
         display="flex"
         flexDirection="column"
         overflow="hidden"
+        bg="surface.1"
       >
         <ModalBody p={0} bg="surface.1" display="flex" flexDirection="column" flex="1" overflow="hidden">
           <Box borderBottom="1px solid" borderColor="border.1" px={4} py={3}>
@@ -287,10 +289,12 @@ export function Search({ isOpen, onClose }: SearchProps) {
             flex="1"
             overflowY="auto"
             p={2}
+            position="relative"
             display={touched && !loading && hasAnyResult ? 'block' : 'flex'}
             alignItems="center"
             justifyContent="center"
           >
+            <PoultryBackground />
             {touched && !loading && hasAnyResult ? (
               <VStack spacing={1} align="stretch" w="full">
                 {visibleSections.map((section) => {
@@ -386,7 +390,7 @@ export function Search({ isOpen, onClose }: SearchProps) {
                     )}
                   </>
                 ) : loading ? (
-                  <Spinner size="lg" color="accent.1" />
+                  <PageLoading size="lg" py={0} />
                 ) : (
                   <>
                     <FiInbox size={28} />

@@ -24,8 +24,6 @@ import {
   Th,
   Td,
   Badge,
-  Spinner,
-  Center,
   Modal,
   ModalOverlay,
   ModalContent,
@@ -36,6 +34,7 @@ import {
   useDisclosure,
   Switch,
 } from '@chakra-ui/react';
+import PageLoading from '../components/PageLoading';
 import { FiPlus, FiEdit2, FiTrash2, FiChevronDown } from 'react-icons/fi';
 import { risquesService, Risque, CreateRisquePayload } from '../services/risques.service';
 import { creatorLabel } from '../utils/creatorLabel';
@@ -154,7 +153,7 @@ export default function Risques() {
   };
 
   if (loading) {
-    return <Center py={20}><Spinner size="xl" color="accent.1" /></Center>;
+    return <PageLoading fillHeight />;
   }
 
   return (

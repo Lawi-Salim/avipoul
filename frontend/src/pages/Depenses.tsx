@@ -26,6 +26,7 @@ import {
   Tooltip,
   Textarea,
 } from '@chakra-ui/react';
+import PageLoading from '../components/PageLoading';
 import { FiPlus, FiTrash2, FiEdit2, FiChevronDown } from 'react-icons/fi';
 import { cyclesService, Cycle } from '../services/cycles.service';
 import { depensesService, Depense, CreateDepensePayload } from '../services/depenses.service';
@@ -165,7 +166,7 @@ export default function Depenses() {
   const totalDepenses = depenses.reduce((sum, d) => sum + Number(d.montant), 0);
 
   if (loading) {
-    return <Box display="flex" justifyContent="center" py={20}><Text color="text.3">Chargement...</Text></Box>;
+    return <PageLoading fillHeight />;
   }
 
   return (

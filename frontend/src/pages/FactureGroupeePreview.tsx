@@ -1,16 +1,16 @@
 import { useEffect, useState, useRef, useCallback, useMemo } from 'react';
-import { downloadFile } from '../utils/downloadFile';
+import { useDownload } from '../contexts/DownloadContext';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
   Box,
   Button,
   HStack,
   Heading,
-  Spinner,
   Alert,
   AlertIcon,
   Text,
 } from '@chakra-ui/react';
+import PageLoading from '../components/PageLoading';
 import { FiArrowLeft, FiDownload, FiChevronLeft, FiChevronRight } from 'react-icons/fi';
 import { ventesService } from '../services/ventes.service';
 import { clientsService, Client } from '../services/clients.service';
@@ -68,6 +68,9 @@ export default function FactureGroupeePreview() {
         doc.open();
         doc.write(htmlContent);
         doc.close();
+        const style = doc.createElement('style');
+        style.textContent = `::-webkit-scrollbar{width:6px;height:6px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:rgba(144,205,244,0.7);border-radius:999px}::-webkit-scrollbar-thumb:hover{background:rgba(144,205,244,0.95)}*{scrollbar-width:thin;scrollbar-color:rgba(144,205,244,0.7) transparent}`;
+        doc.head?.appendChild(style);
       }
     }
   }, [htmlContent]);
@@ -81,14 +84,20 @@ export default function FactureGroupeePreview() {
   const prevCycle = currentIndex < sortedCycles.length - 1 ? sortedCycles[currentIndex + 1] : null;
   const nextCycle = currentIndex > 0 ? sortedCycles[currentIndex - 1] : null;
 
+  const { startDownload } = useDownload();
+
   const handleDownloadPdf = async () => {
     if (!clientId || !cycleId) return;
     setPdfLoading(true);
     setError('');
     try {
-      const response = await ventesService.exportFactureGroupeePdf(clientId, cycleId);
-      const blob = new Blob([response.data], { type: 'application/pdf' });
-      await downloadFile(blob, `facture-groupee-${client?.nom || clientId}-cycle-${cycle?.numero_cycle || cycleId}.pdf`);
+      await startDownload({
+        fileName: `facture-groupee-${client?.nom || clientId}-cycle-${cycle?.numero_cycle || cycleId}.pdf`,
+        fetch: (onProgress) =>
+          ventesService.exportFactureGroupeePdf(clientId, cycleId, onProgress).then((r) =>
+            new Blob([r.data], { type: 'application/pdf' })
+          ),
+      });
     } catch {
       setError('Erreur lors du téléchargement du PDF. Vérifiez que le service PDF est actif.');
     } finally {
@@ -161,9 +170,7 @@ export default function FactureGroupeePreview() {
       </HStack>
 
       {loading ? (
-        <Box display="flex" justifyContent="center" py={20}>
-          <Spinner size="xl" color="accent.1" />
-        </Box>
+        <PageLoading />
       ) : !htmlContent ? (
         <Text color="text.3" fontSize="sm" textAlign="center" py={10}>Aucun contenu disponible</Text>
       ) : (

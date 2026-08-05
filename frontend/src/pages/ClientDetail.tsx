@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback, useMemo } from 'react';
-import { downloadFile } from '../utils/downloadFile';
+import { useDownload } from '../contexts/DownloadContext';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
   Box,
@@ -22,7 +22,6 @@ import {
   MenuList,
   MenuItem,
   SimpleGrid,
-  Spinner,
   Table,
   Thead,
   Tbody,
@@ -37,6 +36,7 @@ import {
   Tooltip,
   useToast,
 } from '@chakra-ui/react';
+import PageLoading from '../components/PageLoading';
 import { FiArrowLeft, FiPlus, FiDownload, FiEye, FiChevronDown } from 'react-icons/fi';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer } from 'recharts';
 import { clientsService, Client, ClientVente } from '../services/clients.service';
@@ -217,13 +217,19 @@ export default function ClientDetail() {
     return Array.from(byCycle.values()).sort((a, b) => a.numero - b.numero);
   }, [ventes]);
 
+  const { startDownload } = useDownload();
+
   const handleDownloadFactureGroupee = async () => {
     if (!id || !dernierCycleAvecVentes) return;
     setPdfLoading(true);
     try {
-      const response = await ventesService.exportFactureGroupeePdf(id, dernierCycleAvecVentes.id);
-      const blob = new Blob([response.data], { type: 'application/pdf' });
-      await downloadFile(blob, `facture-groupee-${client?.nom || id}.pdf`);
+      await startDownload({
+        fileName: `facture-groupee-${client?.nom || id}.pdf`,
+        fetch: (onProgress) =>
+          ventesService.exportFactureGroupeePdf(id, dernierCycleAvecVentes.id, onProgress).then((r) =>
+            new Blob([r.data], { type: 'application/pdf' })
+          ),
+      });
     } catch {
       toast({ title: 'Erreur lors du téléchargement', status: 'error', duration: 3000 });
     } finally {
@@ -237,7 +243,7 @@ export default function ClientDetail() {
   };
 
   if (loading) {
-    return <Box display="flex" justifyContent="center" py={20}><Spinner size="xl" color="accent.1" /></Box>;
+    return <PageLoading fillHeight />;
   }
 
   if (!client) {

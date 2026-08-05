@@ -34,6 +34,7 @@ import {
   ModalCloseButton,
   useDisclosure,
 } from '@chakra-ui/react';
+import PageLoading from '../components/PageLoading';
 import { FiPlus, FiTrash2, FiEdit2, FiAlertTriangle, FiChevronDown } from 'react-icons/fi';
 import { produitsService, ProduitVeterinaire, CreateProduitPayload } from '../services/produits.service';
 import ConfirmModal from '../components/ConfirmModal';
@@ -150,7 +151,7 @@ export default function ProduitsVeterinaires() {
   useEffect(() => { setCurrentPage(1); }, [filterType]);
 
   if (loading) {
-    return <Box display="flex" justifyContent="center" py={20}><Text color="text.3">Chargement...</Text></Box>;
+    return <PageLoading fillHeight />;
   }
 
   return (

@@ -12,12 +12,13 @@ import {
   MenuList,
   MenuItem,
   SimpleGrid,
-  Spinner,
-  Text,
   VStack,
   Badge,
+  Text,
 } from '@chakra-ui/react';
+import PageLoading from '../components/PageLoading';
 import { FiPlus, FiChevronDown } from 'react-icons/fi';
+import { GiRawEgg } from 'react-icons/gi';
 import { cyclesService, Cycle } from '../services/cycles.service';
 import { useAuth } from '../contexts/AuthContext';
 import { UserAvatar } from '../utils/Avatars';
@@ -54,7 +55,7 @@ export default function Cycles() {
   const filtered = filter === 'tous' ? cycles : cycles.filter((c) => c.statut === filter);
 
   if (loading) {
-    return <Center><Spinner size="xl" color="accent.1" /></Center>;
+    return <PageLoading fillHeight />;
   }
 
   return (
@@ -119,6 +120,8 @@ export default function Cycles() {
               borderColor="border.1"
               borderWidth="1px"
               cursor="pointer"
+              position="relative"
+              overflow="hidden"
               _hover={{ borderColor: 'accent.1', transform: 'translateY(-2px)' }}
               transition="all 0.15s"
               onClick={() => navigate(`/cycles/${cycle.id}`)}
@@ -165,6 +168,17 @@ export default function Cycles() {
                   </HStack>
                 </VStack>
               </CardBody>
+              <Box
+                as={GiRawEgg}
+                position="absolute"
+                bottom="-18px"
+                right="-18px"
+                boxSize={{ base: "60px", sm: "80px", md: "100px" }}
+                color="accent.1"
+                opacity={0.05}
+                transform="rotate(-12deg)"
+                pointerEvents="none"
+              />
             </Card>
           ))}
         </SimpleGrid>

@@ -34,6 +34,7 @@ import {
   ModalCloseButton,
   useDisclosure,
 } from '@chakra-ui/react';
+import PageLoading from '../components/PageLoading';
 import { FiPlus, FiTrash2, FiEdit2, FiChevronDown } from 'react-icons/fi';
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
@@ -66,7 +67,10 @@ export default function Utilisateurs() {
 
   const [form, setForm] = useState<CreateUtilisateurPayload>({
     nom: '',
+    prenom: '',
     email: '',
+    telephone: '',
+    adresse: '',
     mot_de_passe: '',
     role: 'employe',
   });
@@ -95,13 +99,21 @@ export default function Utilisateurs() {
 
   const openCreate = () => {
     setEditingId(null);
-    setForm({ nom: '', email: '', mot_de_passe: '', role: 'employe' });
+    setForm({ nom: '', prenom: '', email: '', telephone: '', adresse: '', mot_de_passe: '', role: 'employe' });
     onOpen();
   };
 
   const openEdit = (u: Utilisateur) => {
     setEditingId(u.id);
-    setForm({ nom: u.nom, email: u.email, mot_de_passe: '', role: u.role });
+    setForm({
+      nom: u.nom,
+      prenom: u.prenom || '',
+      email: u.email,
+      telephone: u.telephone || '',
+      adresse: u.adresse || '',
+      mot_de_passe: '',
+      role: u.role,
+    });
     onOpen();
   };
 
@@ -110,7 +122,14 @@ export default function Utilisateurs() {
     setError('');
     try {
       if (editingId) {
-        const payload: Record<string, unknown> = { nom: form.nom, email: form.email, role: form.role };
+        const payload: Record<string, unknown> = {
+          nom: form.nom,
+          prenom: form.prenom,
+          email: form.email,
+          telephone: form.telephone,
+          adresse: form.adresse,
+          role: form.role,
+        };
         await utilisateursService.update(editingId, payload);
         showSuccess('Utilisateur modifié');
       } else {
@@ -149,7 +168,7 @@ export default function Utilisateurs() {
   };
 
   if (loading) {
-    return <Box display="flex" justifyContent="center" py={20}><Text color="text.3">Chargement...</Text></Box>;
+    return <PageLoading fillHeight />;
   }
 
   return (
@@ -183,6 +202,8 @@ export default function Utilisateurs() {
               <Tr>
                 <Th color="text.3" minW={{ base: "120px", md: "auto" }}>Nom</Th>
                 <Th color="text.3" minW={{ base: "150px", md: "auto" }}>Email</Th>
+                <Th color="text.3" minW={{ base: "140px", md: "auto" }}>Téléphone</Th>
+                <Th color="text.3" minW={{ base: "140px", md: "auto" }}>Adresse</Th>
                 <Th color="text.3" minW={{ base: "100px", md: "auto" }}>Rôle</Th>
                 <Th color="text.3" minW={{ base: "80px", md: "auto" }}>Actif</Th>
                 <Th color="text.3">Actions</Th>
@@ -193,6 +214,8 @@ export default function Utilisateurs() {
                 <Tr key={u.id}>
                   <Td color="text.2" fontWeight="medium" minW={{ base: "120px", md: "auto" }}>{u.nom}</Td>
                   <Td color="text.2" minW={{ base: "150px", md: "auto" }}>{u.email}</Td>
+                  <Td color="text.2" minW={{ base: "140px", md: "auto" }}>{u.telephone || '—'}</Td>
+                  <Td color="text.2" minW={{ base: "140px", md: "auto" }}>{u.adresse || '—'}</Td>
                   <Td minW={{ base: "100px", md: "auto" }}>
                     <Box as="span" px={2} py={0.5} borderRadius="full" fontSize={responsiveText.xs} fontWeight="medium" bg={ROLE_COLORS[u.role] || 'surface.3'} color="white">
                       {ROLE_LABELS[u.role] || u.role}
@@ -232,8 +255,20 @@ export default function Utilisateurs() {
                 <Input value={form.nom} onChange={(e) => setForm({ ...form, nom: e.target.value })} bg="surface.2" borderColor="border.1" size={{ base: "md", md: "sm" }} />
               </Box>
               <Box w="100%">
+                <Text mb={1} fontSize={{ base: "sm", md: "ms" }} color="text.2">Prénom</Text>
+                <Input value={form.prenom} onChange={(e) => setForm({ ...form, prenom: e.target.value })} bg="surface.2" borderColor="border.1" size={{ base: "md", md: "sm" }} />
+              </Box>
+              <Box w="100%">
                 <Text mb={1} fontSize={{ base: "sm", md: "ms" }} color="text.2">Email</Text>
                 <Input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} bg="surface.2" borderColor="border.1" size={{ base: "md", md: "sm" }} />
+              </Box>
+              <Box w="100%">
+                <Text mb={1} fontSize={{ base: "sm", md: "ms" }} color="text.2">Téléphone</Text>
+                <Input value={form.telephone} onChange={(e) => setForm({ ...form, telephone: e.target.value })} bg="surface.2" borderColor="border.1" size={{ base: "md", md: "sm" }} placeholder="Ex : +269 434 00 04" />
+              </Box>
+              <Box w="100%">
+                <Text mb={1} fontSize={{ base: "sm", md: "ms" }} color="text.2">Adresse</Text>
+                <Input value={form.adresse} onChange={(e) => setForm({ ...form, adresse: e.target.value })} bg="surface.2" borderColor="border.1" size={{ base: "md", md: "sm" }} placeholder="Ex : Médina rue 13x18" />
               </Box>
               {!editingId && (
                 <Box w="100%">

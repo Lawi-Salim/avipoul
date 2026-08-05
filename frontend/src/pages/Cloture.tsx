@@ -10,13 +10,13 @@ import {
   HStack,
   Icon,
   SimpleGrid,
-  Spinner,
   Text,
   VStack,
   Badge,
   Alert,
   AlertIcon,
 } from '@chakra-ui/react';
+import PageLoading from '../components/PageLoading';
 import {
   FiArrowLeft,
   FiCheckCircle,
@@ -116,7 +116,7 @@ export default function Cloture() {
   const goTo = (path: string, state?: unknown) => navigate(path, { state });
 
   if (loading) {
-    return <Center py={20}><Spinner size="xl" color="accent.1" /></Center>;
+    return <PageLoading fillHeight />;
   }
 
   if (user?.role !== 'admin') {
